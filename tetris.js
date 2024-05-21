@@ -25,6 +25,10 @@ export class Tetris extends Scene {
 
             // TODO:  Fill in as many additional shape instances as needed in this key/value table.
             //        (Requirement 1)
+            
+            // i shape
+            iShape: new defs.iShape(),
+
         };
 
         // *** Materials

@@ -23,6 +23,7 @@ Object.assign(tiny, widgets);
 const defs = {};
 
 export { tiny, defs };
+export { tiny, defs };
 
 const Triangle = (defs.Triangle = class Triangle extends Shape {
   // **Triangle** The simplest possible 2D Shape – one triangle.  It stores 3 vertices, each
