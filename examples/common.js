@@ -25,31 +25,31 @@ const defs = {};
 export { tiny, defs };
 
 const Square = (defs.Square = class Square extends Shape {
-    // **Square** demonstrates two triangles that share vertices.  On any planar surface, the
-    // interior edges don't make any important seams.  In these cases there's no reason not
-    // to re-use data of the common vertices between triangles.  This makes all the vertex
-    // arrays (position, normals, etc) smaller and more cache friendly.
-    constructor() {
-      super("position", "normal", "texture_coord");
-      // Specify the 4 square corner locations, and match those up with normal vectors:
-      this.arrays.position = Vector3.cast(
-        [-1, -1, 0],
-        [1, -1, 0],
-        [-1, 1, 0],
-        [1, 1, 0]
-      );
-      this.arrays.normal = Vector3.cast(
-        [0, 0, 1],
-        [0, 0, 1],
-        [0, 0, 1],
-        [0, 0, 1]
-      );
-      // Arrange the vertices into a square shape in texture space too:
-      this.arrays.texture_coord = Vector.cast([0, 0], [1, 0], [0, 1], [1, 1]);
-      // Use two triangles this time, indexing into four distinct vertices:
-      this.indices.push(0, 1, 2, 1, 3, 2);
-    }
-  });
+  // **Square** demonstrates two triangles that share vertices.  On any planar surface, the
+  // interior edges don't make any important seams.  In these cases there's no reason not
+  // to re-use data of the common vertices between triangles.  This makes all the vertex
+  // arrays (position, normals, etc) smaller and more cache friendly.
+  constructor() {
+    super("position", "normal", "texture_coord");
+    // Specify the 4 square corner locations, and match those up with normal vectors:
+    this.arrays.position = Vector3.cast(
+      [-1, -1, 0],
+      [1, -1, 0],
+      [-1, 1, 0],
+      [1, 1, 0]
+    );
+    this.arrays.normal = Vector3.cast(
+      [0, 0, 1],
+      [0, 0, 1],
+      [0, 0, 1],
+      [0, 0, 1]
+    );
+    // Arrange the vertices into a square shape in texture space too:
+    this.arrays.texture_coord = Vector.cast([0, 0], [1, 0], [0, 1], [1, 1]);
+    // Use two triangles this time, indexing into four distinct vertices:
+    this.indices.push(0, 1, 2, 1, 3, 2);
+  }
+});
 const Cube = (defs.Cube = class Cube extends Shape {
   // **Cube** A closed 3D shape, and the first example of a compound shape (a Shape constructed
   // out of other Shapes).  A cube inserts six Square strips into its own arrays, using six
@@ -177,39 +177,46 @@ const RectangularFrame =
     constructor() {
       super("position", "normal", "texture_coord");
 
-      // Number of cubes in the frame
-      const cubesX = 12; // Number of cubes along the x-axis (half-length)
-      const cubesY = 22; // Number of cubes along the y-axis (half-height)
+      // Number of cubes in the play area
+      const playAreaX = 10; // Width of the play area in cubes
+      const playAreaY = 20; // Height of the play area in cubes
+
+      // Frame width in cubes
+      const frameWidth = 1;
+
+      // Outer dimensions of the frame
+      const outerX = playAreaX / 2 + frameWidth;
+      const outerY = playAreaY / 2 + frameWidth;
 
       // Add top and bottom edges
-      for (let i = -cubesX; i <= cubesX; i++) {
+      for (let i = -outerX; i <= outerX; i++) {
         // Top edge
         Cube.insert_transformed_copy_into(
           this,
           [],
-          Mat4.translation(i * 2, cubesY * 2, 0)
+          Mat4.translation(i * 2, outerY * 2, 0)
         );
         // Bottom edge
         Cube.insert_transformed_copy_into(
           this,
           [],
-          Mat4.translation(i * 2, -cubesY * 2, 0)
+          Mat4.translation(i * 2, -outerY * 2, 0)
         );
       }
 
-      // Add left and right edges, excluding the corners already handled by top/bottom
-      for (let i = -cubesY + 1; i < cubesY; i++) {
+      // Add left and right edges
+      for (let i = -outerY + 1; i < outerY; i++) {
         // Left edge
         Cube.insert_transformed_copy_into(
           this,
           [],
-          Mat4.translation(-cubesX * 2, i * 2, 0)
+          Mat4.translation(-outerX * 2, i * 2, 0)
         );
         // Right edge
         Cube.insert_transformed_copy_into(
           this,
           [],
-          Mat4.translation(cubesX * 2, i * 2, 0)
+          Mat4.translation(outerX * 2, i * 2, 0)
         );
       }
     }
