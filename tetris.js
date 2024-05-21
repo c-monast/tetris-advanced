@@ -24,10 +24,6 @@ export class Tetris extends Scene {
 
     // At the beginning of our program, load one of each of these shape definitions onto the GPU.
     this.shapes = {
-      torus: new defs.Torus(15, 15),
-      torus2: new defs.Torus(3, 15),
-      sphere: new defs.Subdivision_Sphere(4),
-      circle: new defs.Regular_2D_Polygon(1, 15),
       oshape: new defs.OShape(),
       lshape: new defs.LShape(),
       ishape: new defs.IShape(),
@@ -35,12 +31,7 @@ export class Tetris extends Scene {
       zshape: new defs.ZShape(),
       jshape: new defs.JShape(),
       tshape: new defs.TShape(),
-
-      // TODO:  Fill in as many additional shape instances as needed in this key/value table.
-      //        (Requirement 1)
-
-      // i shape
-      iShape: new defs.iShape(),
+      frame: new defs.RectangularFrame(),
     };
 
     // *** Materials
@@ -142,6 +133,12 @@ export class Tetris extends Scene {
       model_transform,
       this.materials.test.override({ color: yellow })
     );
+    this.shapes.frame.draw(
+        context,
+        program_state,
+        model_transform,
+        this.materials.test.override({ color: yellow })
+      );
   }
 }
 
