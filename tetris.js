@@ -17,6 +17,10 @@ export class Tetris extends Scene {
             circle: new defs.Regular_2D_Polygon(1, 15),
             // TODO:  Fill in as many additional shape instances as needed in this key/value table.
             //        (Requirement 1)
+            
+            // i shape
+            iShape: new defs.iShape(),
+
         };
 
         // *** Materials
@@ -71,7 +75,7 @@ export class Tetris extends Scene {
         const yellow = hex_color("#fac91a");
         let model_transform = Mat4.identity();
 
-        this.shapes.torus.draw(context, program_state, model_transform, this.materials.test.override({color: yellow}));
+        this.shapes.iShape.draw(context, program_state, model_transform, this.materials.test.override({color: yellow}));
     }
 }
 

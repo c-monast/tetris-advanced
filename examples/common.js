@@ -1,5 +1,5 @@
-import {tiny} from '../tiny-graphics.js';
-import {widgets} from '../tiny-graphics-widgets.js';
+import { tiny } from '../tiny-graphics.js';
+import { widgets } from '../tiny-graphics-widgets.js';
 // Pull these names into this module's scope for convenience:
 const {
     Vector, Vector3, vec, vec3, vec4, color, Matrix, Mat4,
@@ -10,7 +10,7 @@ Object.assign(tiny, widgets);
 
 const defs = {};
 
-export {tiny, defs};
+export { tiny, defs };
 
 const Triangle = defs.Triangle =
     class Triangle extends Shape {
@@ -52,6 +52,41 @@ const Square = defs.Square =
             this.arrays.texture_coord = Vector.cast([0, 0], [1, 0], [0, 1], [1, 1]);
             // Use two triangles this time, indexing into four distinct vertices:
             this.indices.push(0, 1, 2, 1, 3, 2);
+        }
+    }
+
+
+const iShape = defs.iShape =
+    class iShape extends Shape {
+        // **Box3x1x1** demonstrates a 3-dimensional shape of size 3x1x1. The idea here is to
+        // create a rectangular cuboid with given dimensions. This class will extend the Shape class
+        // and adjust the vertex positions accordingly.
+        constructor() {
+            super("position", "normal", "texture_coord");
+            // Specify the 8 corner locations for a 3x1x1 box, and match those up with normal vectors:
+            // The shape is aligned along the x-axis being 3 units in length.
+            this.arrays.position = Vector3.cast(
+                [-4, -1, -1], [4, -1, -1], [-4, 1, -1], [4, 1, -1], // Bottom vertices
+                [-4, -1, 1], [4, -1, 1], [-4, 1, 1], [4, 1, 1]      // Top vertices
+            );
+            this.arrays.normal = Vector3.cast(
+                [0, 0, -1], [0, 0, -1],
+                [0, 0, -1], [0, 0, -1],
+                [0, 0, 1],  [0, 0, 1],
+                [0, 0, 1],  [0, 0, 1]
+            );
+            // Texture coordinates can be simple as we are not focusing on texturing in this example:
+            this.arrays.texture_coord = Vector.cast(
+                [0, 0], [1, 0], [0, 1], [1, 1],
+                [0, 0], [1, 0], [0, 1], [1, 1]
+            );
+            // Build the box by connecting vertices into triangles:
+            // Front and back faces
+            this.indices.push(0, 1, 2, 1, 3, 2, 4, 5, 6, 5, 7, 6);
+            // Top and bottom faces
+            this.indices.push(2, 3, 6, 3, 7, 6, 0, 1, 4, 1, 5, 4);
+            // Left and right faces
+            this.indices.push(0, 2, 4, 2, 6, 4, 1, 3, 5, 3, 7, 5);
         }
     }
 
@@ -201,7 +236,7 @@ const Subdivision_Sphere = defs.Subdivision_Sphere =
                         if (tex[q[0]][0] < 0.5) {
                             this.indices[q[1]] = this.arrays.position.length;
                             this.arrays.position.push(this.arrays.position[q[0]].copy());
-                            this.arrays.normal.push(this.arrays.normal  [q[0]].copy());
+                            this.arrays.normal.push(this.arrays.normal[q[0]].copy());
                             tex.push(tex[q[0]].plus(vec(1, 0)));
                         }
                     }
@@ -350,7 +385,7 @@ const Cone_Tip = defs.Cone_Tip =
 const Torus = defs.Torus =
     class Torus extends Shape {
         // Build a donut shape.  An example of a surface of revolution.
-        constructor(rows, columns, texture_range=[[0, 1], [0, 1]]) {
+        constructor(rows, columns, texture_range = [[0, 1], [0, 1]]) {
             super("position", "normal", "texture_coord");
             const circle_points = Array(rows).fill(vec3(1 / 3, 0, 0))
                 .map((p, i, a) => Mat4.translation(-2 / 3, 0, 0)
@@ -456,9 +491,9 @@ const Minimal_Webgl_Demo = defs.Minimal_Webgl_Demo =
         constructor(webgl_manager, control_panel) {
             super(webgl_manager, control_panel);
             // Don't create any DOM elements to control this scene:
-            this.widget_options = {make_controls: false, show_explanation: false};
+            this.widget_options = { make_controls: false, show_explanation: false };
             // Send a Triangle's vertices to the GPU's buffers:
-            this.shapes = {triangle: new Minimal_Shape()};
+            this.shapes = { triangle: new Minimal_Shape() };
             this.shader = new Basic_Shader();
         }
 
@@ -710,7 +745,7 @@ const Phong_Shader = defs.Phong_Shader =
             // within this function, one data field at a time, to fully initialize the shader for a draw.
 
             // Fill in any missing fields in the Material object with custom defaults for this shader:
-            const defaults = {color: color(0, 0, 0, 1), ambient: 0, diffusivity: 1, specularity: 1, smoothness: 40};
+            const defaults = { color: color(0, 0, 0, 1), ambient: 0, diffusivity: 1, specularity: 1, smoothness: 40 };
             material = Object.assign({}, defaults, material);
 
             this.send_material(context, gpu_addresses, material);
@@ -843,7 +878,7 @@ const Movement_Controls = defs.Movement_Controls =
         add_mouse_controls(canvas) {
             // add_mouse_controls():  Attach HTML mouse events to the drawing canvas.
             // First, measure mouse steering, for rotating the flyaround camera:
-            this.mouse = {"from_center": vec(0, 0)};
+            this.mouse = { "from_center": vec(0, 0) };
             const mouse_position = (e, rect = canvas.getBoundingClientRect()) =>
                 vec(e.clientX - (rect.left + rect.right) / 2, e.clientY - (rect.bottom + rect.top) / 2);
             // Set up mouse response.  The last one stops us from reacting if the mouse leaves the canvas:
