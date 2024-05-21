@@ -15,6 +15,14 @@ export class Tetris extends Scene {
             torus2: new defs.Torus(3, 15),
             sphere: new defs.Subdivision_Sphere(4),
             circle: new defs.Regular_2D_Polygon(1, 15),
+            oshape: new defs.OShape(),
+            lshape: new defs.LShape(),
+            ishape: new defs.IShape(),
+            sshape: new defs.SShape(),
+            zshape: new defs.ZShape(),
+            jshape: new defs.JShape(),
+            tshape: new defs.TShape(),
+
             // TODO:  Fill in as many additional shape instances as needed in this key/value table.
             //        (Requirement 1)
         };
@@ -71,7 +79,7 @@ export class Tetris extends Scene {
         const yellow = hex_color("#fac91a");
         let model_transform = Mat4.identity();
 
-        this.shapes.torus.draw(context, program_state, model_transform, this.materials.test.override({color: yellow}));
+        this.shapes.ishape.draw(context, program_state, model_transform, this.materials.test.override({color: yellow}));
     }
 }
 
