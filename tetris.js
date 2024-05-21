@@ -36,6 +36,46 @@ export class Tetris extends Scene {
 
     // *** Materials
     this.materials = {
+      oshape: new Material(new defs.Phong_Shader(), {
+        ambient: 0.4,
+        diffusivity: 0.6,
+        color: hex_color("#ff0d72"), // Pink
+      }),
+      lshape: new Material(new defs.Phong_Shader(), {
+        ambient: 0.4,
+        diffusivity: 0.6,
+        color: hex_color("#0dc2ff"), // Light Blue
+      }),
+      ishape: new Material(new defs.Phong_Shader(), {
+        ambient: 0.4,
+        diffusivity: 0.6,
+        color: hex_color("#0dff72"), // Green
+      }),
+      sshape: new Material(new defs.Phong_Shader(), {
+        ambient: 0.4,
+        diffusivity: 0.6,
+        color: hex_color("#f538ff"), // Purple
+      }),
+      zshape: new Material(new defs.Phong_Shader(), {
+        ambient: 0.4,
+        diffusivity: 0.6,
+        color: hex_color("#ff8e0d"), // Orange
+      }),
+      jshape: new Material(new defs.Phong_Shader(), {
+        ambient: 0.4,
+        diffusivity: 0.6,
+        color: hex_color("#3877ff"), // Blue
+      }),
+      tshape: new Material(new defs.Phong_Shader(), {
+        ambient: 0.4,
+        diffusivity: 0.6,
+        color: hex_color("#ff0d0d"), // Red
+      }),
+      frame: new Material(new defs.Phong_Shader(), {
+        ambient: 0.4,
+        diffusivity: 0.6,
+        color: hex_color("#cccccc"), // Light Gray
+      }),
       test: new Material(new defs.Phong_Shader(), {
         ambient: 0.4,
         diffusivity: 0.6,
@@ -47,12 +87,10 @@ export class Tetris extends Scene {
         color: hex_color("#992828"),
       }),
       ring: new Material(new Ring_Shader()),
-      // TODO:  Fill in as many additional material objects as needed in this key/value table.
-      //        (Requirement 4)
     };
 
     this.initial_camera_location = Mat4.look_at(
-      vec3(0, 10, 20),
+      vec3(0, 0, 60),
       vec3(0, 0, 0),
       vec3(0, 1, 0)
     );
@@ -127,18 +165,55 @@ export class Tetris extends Scene {
     const yellow = hex_color("#fac91a");
     let model_transform = Mat4.identity();
 
+    // Manually position each shape to stack them vertically
+    this.shapes.oshape.draw(
+      context,
+      program_state,
+      model_transform.times(Mat4.translation(0, -15, 0)),
+      this.materials.oshape
+    );
+    this.shapes.lshape.draw(
+      context,
+      program_state,
+      model_transform.times(Mat4.translation(-5, -10, 0)),
+      this.materials.lshape
+    );
+    this.shapes.ishape.draw(
+      context,
+      program_state,
+      model_transform.times(Mat4.translation(0, -5, 0)),
+      this.materials.ishape
+    );
+    this.shapes.sshape.draw(
+      context,
+      program_state,
+      model_transform.times(Mat4.translation(0, 0, 0)),
+      this.materials.sshape
+    );
     this.shapes.zshape.draw(
       context,
       program_state,
-      model_transform,
-      this.materials.test.override({ color: yellow })
+      model_transform.times(Mat4.translation(0, 5, 0)),
+      this.materials.zshape
+    );
+    this.shapes.jshape.draw(
+      context,
+      program_state,
+      model_transform.times(Mat4.translation(5, 10, 0)),
+      this.materials.jshape
+    );
+    this.shapes.tshape.draw(
+      context,
+      program_state,
+      model_transform.times(Mat4.translation(0, 15, 0)),
+      this.materials.tshape
     );
     this.shapes.frame.draw(
-        context,
-        program_state,
-        model_transform,
-        this.materials.test.override({ color: yellow })
-      );
+      context,
+      program_state,
+      model_transform,
+      this.materials.frame
+    );
   }
 }
 
