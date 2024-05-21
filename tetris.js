@@ -83,7 +83,7 @@ export class Tetris extends Scene {
         const yellow = hex_color("#fac91a");
         let model_transform = Mat4.identity();
 
-        this.shapes.ishape.draw(context, program_state, model_transform, this.materials.test.override({color: yellow}));
+        this.shapes.zshape.draw(context, program_state, model_transform, this.materials.test.override({color: yellow}));
     }
 }
 
