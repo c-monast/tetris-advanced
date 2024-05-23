@@ -155,6 +155,7 @@ export class Tetris extends Scene {
   }
 
   make_control_panel() {
+<<<<<<< HEAD
     this.key_triggered_button("Move piece left", ["j"], () => this.move_piece(-1));
     this.key_triggered_button("Move piece right", ["l"], () => this.move_piece(1));
     this.key_triggered_button("Rotate piece", ["i"], () => this.rotate_piece());
@@ -177,6 +178,42 @@ export class Tetris extends Scene {
       // If collision detected, revert rotation
       this.piece_rotation = Mat4.rotation(-Math.PI / 2, 0, 0, 1).times(this.piece_rotation);
     }
+=======
+    // Draw the scene's buttons, setup their actions and keyboard shortcuts, and monitor live measurements.
+    this.key_triggered_button(
+      "Rotate piece clockwise",
+      ["i"],
+      () => (this.attached = () => null)
+    );
+    this.new_line();
+    this.key_triggered_button(
+      "Move piece left",
+      ["ArrowLeft"],
+      () => (this.attached = () => this.planet_1)
+    );
+    this.key_triggered_button(
+      "Move piece right",
+      ["ArrowRight"],
+      () => (this.attached = () => this.planet_2)
+    );
+    this.new_line();
+    this.key_triggered_button(
+      "Move piece down",
+      ["ArrowDown"],
+      () => (this.attached = () => this.planet_3)
+    );
+    this.key_triggered_button(
+      "Switch between Day/Night",
+      ["i"],
+      () => (this.attached = () => this.planet_4)
+    );
+    this.new_line();
+    this.key_triggered_button(
+      "Rotate backgrounds",
+      ["o"],
+      () => (this.attached = () => this.moon)
+    );
+>>>>>>> refs/remotes/origin/main
   }
 
   display(context, program_state) {
