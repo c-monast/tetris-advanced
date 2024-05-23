@@ -32,6 +32,7 @@ export class Tetris extends Scene {
       jshape: new defs.JShape(),
       tshape: new defs.TShape(),
       frame: new defs.RectangularFrame(),
+      cube: new defs.Cube(),
     };
 
     // *** Materials
@@ -86,7 +87,6 @@ export class Tetris extends Scene {
         diffusivity: 0.6,
         color: hex_color("#992828"),
       }),
-      ring: new Material(new Ring_Shader()),
     };
 
     this.initial_camera_location = Mat4.look_at(
@@ -99,36 +99,36 @@ export class Tetris extends Scene {
   make_control_panel() {
     // Draw the scene's buttons, setup their actions and keyboard shortcuts, and monitor live measurements.
     this.key_triggered_button(
-      "View solar system",
-      ["Control", "0"],
+      "Rotate piece clockwise",
+      ["u"],
       () => (this.attached = () => null)
     );
     this.new_line();
     this.key_triggered_button(
-      "Attach to planet 1",
-      ["Control", "1"],
+      "Move piece left",
+      ["j"],
       () => (this.attached = () => this.planet_1)
     );
     this.key_triggered_button(
-      "Attach to planet 2",
-      ["Control", "2"],
+      "Move piece right",
+      ["l"],
       () => (this.attached = () => this.planet_2)
     );
     this.new_line();
     this.key_triggered_button(
-      "Attach to planet 3",
-      ["Control", "3"],
+      "Move piece down",
+      ["k"],
       () => (this.attached = () => this.planet_3)
     );
     this.key_triggered_button(
-      "Attach to planet 4",
-      ["Control", "4"],
+      "Switch between Day/Night",
+      [" "],
       () => (this.attached = () => this.planet_4)
     );
     this.new_line();
     this.key_triggered_button(
-      "Attach to moon",
-      ["Control", "m"],
+      "Rotate backgrounds",
+      ["h"],
       () => (this.attached = () => this.moon)
     );
   }
@@ -162,7 +162,7 @@ export class Tetris extends Scene {
     // TODO:  Fill in matrix operations and drawing code to draw the solar system scene (Requirements 3 and 4)
     const t = program_state.animation_time / 1000,
       dt = program_state.animation_delta_time / 1000;
-    const yellow = hex_color("#fac91a");
+    const yellow = hex_color("#0d2e03");
     let model_transform = Mat4.identity();
 
     // Manually position each shape to stack them vertically
@@ -213,6 +213,13 @@ export class Tetris extends Scene {
       program_state,
       model_transform,
       this.materials.frame
+    );
+
+    let cube_transform = Mat4.identity();
+    cube_transform = cube_transform.times(Mat4.translation(0, -24, 0))
+        .times(Mat4.scale(1000, 0, 100));
+    this.shapes.cube.draw(
+        context, program_state, cube_transform, this.materials.test2.override(hex_color("#277a0d"))
     );
   }
 }
