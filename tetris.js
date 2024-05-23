@@ -100,35 +100,35 @@ export class Tetris extends Scene {
     // Draw the scene's buttons, setup their actions and keyboard shortcuts, and monitor live measurements.
     this.key_triggered_button(
       "Rotate piece clockwise",
-      ["u"],
+      ["i"],
       () => (this.attached = () => null)
     );
     this.new_line();
     this.key_triggered_button(
       "Move piece left",
-      ["j"],
+      ["ArrowLeft"],
       () => (this.attached = () => this.planet_1)
     );
     this.key_triggered_button(
       "Move piece right",
-      ["l"],
+      ["ArrowRight"],
       () => (this.attached = () => this.planet_2)
     );
     this.new_line();
     this.key_triggered_button(
       "Move piece down",
-      ["k"],
+      ["ArrowDown"],
       () => (this.attached = () => this.planet_3)
     );
     this.key_triggered_button(
       "Switch between Day/Night",
-      [" "],
+      ["i"],
       () => (this.attached = () => this.planet_4)
     );
     this.new_line();
     this.key_triggered_button(
       "Rotate backgrounds",
-      ["h"],
+      ["o"],
       () => (this.attached = () => this.moon)
     );
   }
