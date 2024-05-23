@@ -19,10 +19,8 @@ const {
 
 export class Tetris extends Scene {
   constructor() {
-    // constructor(): Scenes begin by populating initial values like the Shapes and Materials they'll need.
     super();
 
-    // At the beginning of our program, load one of each of these shape definitions onto the GPU.
     this.shapes = {
       oshape: new defs.OShape(),
       lshape: new defs.LShape(),
@@ -35,194 +33,190 @@ export class Tetris extends Scene {
       cube: new defs.Cube(),
     };
 
-    // *** Materials
     this.materials = {
-      oshape: new Material(new defs.Phong_Shader(), {
-        ambient: 0.4,
-        diffusivity: 0.6,
-        color: hex_color("#ff0d72"), // Pink
-      }),
-      lshape: new Material(new defs.Phong_Shader(), {
-        ambient: 0.4,
-        diffusivity: 0.6,
-        color: hex_color("#0dc2ff"), // Light Blue
-      }),
-      ishape: new Material(new defs.Phong_Shader(), {
-        ambient: 0.4,
-        diffusivity: 0.6,
-        color: hex_color("#0dff72"), // Green
-      }),
-      sshape: new Material(new defs.Phong_Shader(), {
-        ambient: 0.4,
-        diffusivity: 0.6,
-        color: hex_color("#f538ff"), // Purple
-      }),
-      zshape: new Material(new defs.Phong_Shader(), {
-        ambient: 0.4,
-        diffusivity: 0.6,
-        color: hex_color("#ff8e0d"), // Orange
-      }),
-      jshape: new Material(new defs.Phong_Shader(), {
-        ambient: 0.4,
-        diffusivity: 0.6,
-        color: hex_color("#3877ff"), // Blue
-      }),
-      tshape: new Material(new defs.Phong_Shader(), {
-        ambient: 0.4,
-        diffusivity: 0.6,
-        color: hex_color("#ff0d0d"), // Red
-      }),
-      frame: new Material(new defs.Phong_Shader(), {
-        ambient: 0.4,
-        diffusivity: 0.6,
-        color: hex_color("#cccccc"), // Light Gray
-      }),
-      test: new Material(new defs.Phong_Shader(), {
-        ambient: 0.4,
-        diffusivity: 0.6,
-        color: hex_color("#ffffff"),
-      }),
-      test2: new Material(new Gouraud_Shader(), {
-        ambient: 0.4,
-        diffusivity: 0.6,
-        color: hex_color("#992828"),
-      }),
+      oshape: new Material(new defs.Phong_Shader(), { ambient: 0.4, diffusivity: 0.6, color: hex_color("#ff0d72") }),
+      lshape: new Material(new defs.Phong_Shader(), { ambient: 0.4, diffusivity: 0.6, color: hex_color("#0dc2ff") }),
+      ishape: new Material(new defs.Phong_Shader(), { ambient: 0.4, diffusivity: 0.6, color: hex_color("#0dff72") }),
+      sshape: new Material(new defs.Phong_Shader(), { ambient: 0.4, diffusivity: 0.6, color: hex_color("#f538ff") }),
+      zshape: new Material(new defs.Phong_Shader(), { ambient: 0.4, diffusivity: 0.6, color: hex_color("#ff8e0d") }),
+      jshape: new Material(new defs.Phong_Shader(), { ambient: 0.4, diffusivity: 0.6, color: hex_color("#3877ff") }),
+      tshape: new Material(new defs.Phong_Shader(), { ambient: 0.4, diffusivity: 0.6, color: hex_color("#ff0d0d") }),
+      frame: new Material(new defs.Phong_Shader(), { ambient: 0.4, diffusivity: 0.6, color: hex_color("#cccccc") }),
+      test2: new Material(new Gouraud_Shader(), { ambient: 0.4, diffusivity: 0.6, color: hex_color("#992828") }),
     };
 
     this.initial_camera_location = Mat4.look_at(
-      vec3(0, 0, 60),
-      vec3(0, 0, 0),
-      vec3(0, 1, 0)
+      vec3(10, 10, 40),  // Camera position
+      vec3(5, 10, 0),    // Look at the center of the board
+      vec3(0, 1, 0)      // Up direction
     );
+
+    // Game grid (20 rows x 10 columns)
+    this.grid = Array.from({ length: 20 }, () => Array(10).fill(null));
+
+    // Current piece and its position
+    this.current_piece = null;
+    this.piece_position = { x: 5, y: 19 }; // Adjust to start from the top center
+    this.piece_rotation = Mat4.identity(); // Track the current rotation of the piece
+
+    // Start game loop
+    this.start_game_loop();
+  }
+
+  start_game_loop() {
+    this.current_piece = this.generate_new_piece();
+    this.piece_position = { x: 5, y: 19 - this.get_piece_height(this.current_piece) }; // Adjust spawn position
+    this.piece_rotation = Mat4.identity();
+    this.next_drop_time = 0;
+
+    this.game_over = false;
+  }
+
+  generate_new_piece() {
+    const pieces = ["oshape", "lshape", "ishape", "sshape", "zshape", "jshape", "tshape"];
+    const random_piece = pieces[Math.floor(Math.random() * pieces.length)];
+    return this.shapes[random_piece];
+  }
+
+  get_piece_height(piece) {
+    // Calculate the height of the piece based on its shape
+    let maxY = 0;
+    for (let i = 0; i < piece.arrays.position.length; i += 4) {
+      maxY = Math.max(maxY, piece.arrays.position[i][1]);
+    }
+    return maxY / 2; // Since each unit in TinyGraphics is 2 units tall
+  }
+
+  drop_piece(dt) {
+    this.next_drop_time -= dt;
+    if (this.next_drop_time <= 0) {
+      this.piece_position.y -= 1;
+      if (this.detect_collision()) {
+        this.piece_position.y += 1;
+        this.merge_piece_to_grid();
+        this.clear_full_rows();
+        if (this.piece_position.y === 0) {
+          this.game_over = true;
+        }
+        this.current_piece = this.generate_new_piece();
+        this.piece_position = { x: 5, y: 19 - this.get_piece_height(this.current_piece) }; // Adjust spawn position
+        this.piece_rotation = Mat4.identity();
+      }
+      this.next_drop_time = 1; // Drop every 1 second
+    }
+  }
+
+  detect_collision(rotated_piece = false) {
+    for (let i = 0; i < this.current_piece.arrays.position.length; i += 4) {
+      let cube_position = vec3(
+        this.current_piece.arrays.position[i][0],
+        this.current_piece.arrays.position[i][1],
+        this.current_piece.arrays.position[i][2]
+      );
+
+      if (rotated_piece) {
+        cube_position = this.piece_rotation.times(vec4(cube_position, 1)).to3();
+      }
+
+      let x = this.piece_position.x + cube_position[0] / 2;
+      let y = this.piece_position.y - cube_position[1] / 2;
+
+      if (x < 0 || x >= 10 || y < 0 || (y < 20 && this.grid[Math.floor(y)][Math.floor(x)])) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  merge_piece_to_grid() {
+    for (let i = 0; i < this.current_piece.arrays.position.length; i += 4) {
+      let cube_position = vec3(
+        this.current_piece.arrays.position[i][0],
+        this.current_piece.arrays.position[i][1],
+        this.current_piece.arrays.position[i][2]
+      );
+
+      cube_position = this.piece_rotation.times(vec4(cube_position, 1)).to3();
+
+      let x = this.piece_position.x + cube_position[0] / 2;
+      let y = this.piece_position.y - cube_position[1] / 2;
+
+      if (y >= 0) {
+        this.grid[Math.floor(y)][Math.floor(x)] = this.materials[this.current_piece.constructor.name.toLowerCase()];
+      }
+    }
+  }
+
+  clear_full_rows() {
+    this.grid = this.grid.filter(row => row.some(cell => !cell));
+    while (this.grid.length < 20) {
+      this.grid.unshift(Array(10).fill(null));
+    }
   }
 
   make_control_panel() {
-    // Draw the scene's buttons, setup their actions and keyboard shortcuts, and monitor live measurements.
-    this.key_triggered_button(
-      "Rotate piece clockwise",
-      ["u"],
-      () => (this.attached = () => null)
-    );
-    this.new_line();
-    this.key_triggered_button(
-      "Move piece left",
-      ["j"],
-      () => (this.attached = () => this.planet_1)
-    );
-    this.key_triggered_button(
-      "Move piece right",
-      ["l"],
-      () => (this.attached = () => this.planet_2)
-    );
-    this.new_line();
-    this.key_triggered_button(
-      "Move piece down",
-      ["k"],
-      () => (this.attached = () => this.planet_3)
-    );
-    this.key_triggered_button(
-      "Switch between Day/Night",
-      [" "],
-      () => (this.attached = () => this.planet_4)
-    );
-    this.new_line();
-    this.key_triggered_button(
-      "Rotate backgrounds",
-      ["h"],
-      () => (this.attached = () => this.moon)
-    );
+    this.key_triggered_button("Move piece left", ["j"], () => this.move_piece(-1));
+    this.key_triggered_button("Move piece right", ["l"], () => this.move_piece(1));
+    this.key_triggered_button("Rotate piece", ["i"], () => this.rotate_piece());
+    this.key_triggered_button("Drop piece", ["s"], () => this.drop_piece(1));
+  }
+
+  move_piece(direction) {
+    this.piece_position.x += direction;
+    if (this.detect_collision()) {
+      this.piece_position.x -= direction;
+    }
+  }
+
+  rotate_piece() {
+    // Apply rotation matrix (90 degrees around the Z-axis)
+    let new_rotation = Mat4.rotation(Math.PI / 2, 0, 0, 1).times(this.piece_rotation);
+    this.piece_rotation = new_rotation;
+
+    if (this.detect_collision(true)) {
+      // If collision detected, revert rotation
+      this.piece_rotation = Mat4.rotation(-Math.PI / 2, 0, 0, 1).times(this.piece_rotation);
+    }
   }
 
   display(context, program_state) {
-    // display():  Called once per frame of animation.
-    // Setup -- This part sets up the scene's overall camera matrix, projection matrix, and lights:
     if (!context.scratchpad.controls) {
-      this.children.push(
-        (context.scratchpad.controls = new defs.Movement_Controls())
-      );
-      // Define the global camera and projection matrices, which are stored in program_state.
+      this.children.push(context.scratchpad.controls = new defs.Movement_Controls());
       program_state.set_camera(this.initial_camera_location);
     }
 
-    program_state.projection_transform = Mat4.perspective(
-      Math.PI / 4,
-      context.width / context.height,
-      0.1,
-      1000
-    );
+    program_state.projection_transform = Mat4.perspective(Math.PI / 4, context.width / context.height, 0.1, 1000);
+    const t = program_state.animation_time / 1000, dt = program_state.animation_delta_time / 1000;
 
-    // TODO: Create Planets (Requirement 1)
-    // this.shapes.[XXX].draw([XXX]) // <--example
-
-    // TODO: Lighting (Requirement 2)
     const light_position = vec4(0, 5, 5, 1);
-    // The parameters of the Light are: position, color, size
     program_state.lights = [new Light(light_position, color(1, 1, 1, 1), 1000)];
 
-    // TODO:  Fill in matrix operations and drawing code to draw the solar system scene (Requirements 3 and 4)
-    const t = program_state.animation_time / 1000,
-      dt = program_state.animation_delta_time / 1000;
-    const yellow = hex_color("#0d2e03");
-    let model_transform = Mat4.identity();
+    if (!this.game_over) {
+      this.drop_piece(dt);
 
-    // Manually position each shape to stack them vertically
-    this.shapes.oshape.draw(
-      context,
-      program_state,
-      model_transform.times(Mat4.translation(0, -15, 0)),
-      this.materials.oshape
-    );
-    this.shapes.lshape.draw(
-      context,
-      program_state,
-      model_transform.times(Mat4.translation(-5, -10, 0)),
-      this.materials.lshape
-    );
-    this.shapes.ishape.draw(
-      context,
-      program_state,
-      model_transform.times(Mat4.translation(0, -5, 0)),
-      this.materials.ishape
-    );
-    this.shapes.sshape.draw(
-      context,
-      program_state,
-      model_transform.times(Mat4.translation(0, 0, 0)),
-      this.materials.sshape
-    );
-    this.shapes.zshape.draw(
-      context,
-      program_state,
-      model_transform.times(Mat4.translation(0, 5, 0)),
-      this.materials.zshape
-    );
-    this.shapes.jshape.draw(
-      context,
-      program_state,
-      model_transform.times(Mat4.translation(5, 10, 0)),
-      this.materials.jshape
-    );
-    this.shapes.tshape.draw(
-      context,
-      program_state,
-      model_transform.times(Mat4.translation(0, 15, 0)),
-      this.materials.tshape
-    );
-    this.shapes.frame.draw(
-      context,
-      program_state,
-      model_transform,
-      this.materials.frame
-    );
+      let model_transform = Mat4.translation(this.piece_position.x * 2, this.piece_position.y * 2, 0).times(this.piece_rotation);
+      this.current_piece.draw(context, program_state, model_transform, this.materials[this.current_piece.constructor.name.toLowerCase()]);
+    }
 
-    let cube_transform = Mat4.identity();
-    cube_transform = cube_transform.times(Mat4.translation(0, -24, 0))
-        .times(Mat4.scale(1000, 0, 100));
-    this.shapes.cube.draw(
-        context, program_state, cube_transform, this.materials.test2.override(hex_color("#277a0d"))
-    );
+    for (let y = 0; y < this.grid.length; y++) {
+      for (let x = 0; x < this.grid[y].length; x++) {
+        if (this.grid[y][x]) {
+          let model_transform = Mat4.translation(x * 2, y * 2, 0);
+          this.shapes.cube.draw(context, program_state, model_transform, this.grid[y][x]);
+        }
+      }
+    }
+
+    // Draw the frame
+    let frame_transform = Mat4.translation(10, 20, 0);
+    this.shapes.frame.draw(context, program_state, frame_transform, this.materials.frame);
+
+    if (this.game_over) {
+      // Display game over message
+    }
   }
 }
+
 
 class Gouraud_Shader extends Shader {
   // This is a Shader using Phong_Shader as template
