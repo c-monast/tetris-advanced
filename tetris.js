@@ -44,13 +44,16 @@ export class Tetris extends Scene {
       jshape: new Material(new defs.Phong_Shader(), { ambient: 0.4, diffusivity: 0.6, color: hex_color("#3877ff") }),
       tshape: new Material(new defs.Phong_Shader(), { ambient: 0.4, diffusivity: 0.6, color: hex_color("#ff0d0d") }),
       frame: new Material(new defs.Phong_Shader(), { ambient: 0.4, diffusivity: 0.6, color: hex_color("#cccccc") }),
+      frame_night: new Material(new defs.Phong_Shader(), { ambient: 0.4, diffusivity: 0.6, color: hex_color("#808080") }),
       scoreFrame: new Material(new defs.Phong_Shader(), { ambient: 1, diffusivity: 1, color: hex_color("#ba53ed") }),
       numbers: new Material(new defs.Phong_Shader(), { ambient: 1, diffusivity: 10, color: hex_color("#44fcf6") }),
       test2: new Material(new Gouraud_Shader(), { ambient: 0.4, diffusivity: 0.6, color: hex_color("#992828") }),
       sky: new Material(new defs.Phong_Shader(), { ambient: 0.9, diffusivity: 0.001, color: hex_color("#87ceeb") }),
       night_sky: new Material(new defs.Phong_Shader(), { ambient: 0.9, diffusivity: 0.001, color: hex_color("#142D38") }),
       ground: new Material(new defs.Phong_Shader(), { ambient: 0.8, specularity: 0.3, diffusivity: 0.3, color: hex_color("#276221") }),
+      ground_night: new Material(new defs.Phong_Shader(), {ambient: 0.8, specularity: 0.3, diffusivity: 0.3, color: hex_color("#14381d") }),
       sun: new Material(new defs.Phong_Shader(), { ambient: 1, diffusivity: 1, color: hex_color("#FFFFFF") }),
+      moon: new Material(new defs.Phong_Shader(), { ambient: 0.8, diffusivity: 0.6, color: hex_color("#F0E68C") }),
       test3: new Material(new defs.Phong_Shader(), { ambient: 1, diffusivity: 1, color: hex_color("#000000") }),
     };
 
@@ -62,6 +65,11 @@ export class Tetris extends Scene {
 
     this.grid = Array.from({ length: 20 }, () => Array(10).fill(null));
     this.clouds = [];
+    this.rotation = true;
+    this.paused_time = 0;
+    this.last_pause_time = 0;
+    this.game_time = 0;
+    this.rotation_time = 0;
 
     for (let i = 0; i < 5; i++) {
       this.clouds.push(Mat4.translation(Math.random() * 300 - 150, 40 + Math.random() * 10, 50 + Math.random() * 20).times(Mat4.scale(10, 5, 5)));
@@ -72,6 +80,13 @@ export class Tetris extends Scene {
     this.piece_rotation = Mat4.identity();
 
     this.start_game_loop();
+  }
+
+  drawMoon(context, program_state, moon_transform) {
+    //let subtract_sphere = Mat4.translation(0.5, 0, 0).times(Mat4.scale(10, 10, 10));
+
+    this.shapes.sphere.draw(context, program_state, moon_transform, this.materials.moon);
+    //this.shapes.sphere.draw(context, program_state, subtract_sphere, this.materials.night_sky);
   }
 
   drawBush(context, program_state, matrix, tex){
@@ -100,11 +115,10 @@ export class Tetris extends Scene {
     this.shapes.sphere.draw(context, program_state, sky, sky_material);
   }
 
-
-
-  drawGround(context, program_state, ground_transform){
+  drawGround(context, program_state, ground_transform, sun_y_position){
     ground_transform = ground_transform.times(Mat4.translation(0, -100, 0));
-    this.shapes.cube.draw(context, program_state, ground_transform, this.materials.ground);
+    let ground_material = sun_y_position < 0 ? this.materials.ground_night : this.materials.ground;
+    this.shapes.cube.draw(context, program_state, ground_transform, ground_material);
   }
 
   start_game_loop() {
@@ -149,6 +163,7 @@ export class Tetris extends Scene {
       this.next_drop_time = 1; // Drop every 1 second
     }
   }
+
 
   detect_collision(rotated_piece = false) {
     for (let i = 0; i < this.current_piece.arrays.position.length; i += 4) {
@@ -203,6 +218,9 @@ export class Tetris extends Scene {
     this.key_triggered_button("Move piece right", ["ArrowRight"], () => this.move_piece(1));
     this.key_triggered_button("Rotate piece", ["ArrowUp"], () => this.rotate_piece());
     this.key_triggered_button("Drop piece", ["ArrowDown"], () => this.drop_piece(1));
+    this.key_triggered_button("Stop Day/Night cycle", ["g"], () => {
+      this.rotation ^= 1;
+    });
   }
 
   move_piece(direction) {
@@ -225,7 +243,7 @@ export class Tetris extends Scene {
 
   draw_score(context, program_state) {
     const score_position = { x: 30, y: 20 }; // Adjust as needed
-    const score = 4200; // Placeholder score
+    const score = 721; // Placeholder score
 
     let model_transform = Mat4.translation(score_position.x, score_position.y, 0);
 
@@ -367,20 +385,58 @@ export class Tetris extends Scene {
 
     let model_transform = Mat4.identity();
     program_state.projection_transform = Mat4.perspective(Math.PI / 4, context.width / context.height, 0.1, 1000);
-    const t = program_state.animation_time / 1000, dt = program_state.animation_delta_time / 1000;
+    const current_time = program_state.animation_time / 1000;
+    const dt = program_state.animation_delta_time / 1000;
 
-    let sun_transform = model_transform.times(Mat4.rotation(t / 3, 1, 0, 0))
+    // Update the paused time if the rotation flag is toggled off
+    if (!this.rotation) {
+      if (!this.last_pause_time) {
+        this.last_pause_time = current_time;
+      }
+      this.paused_time += current_time - this.last_pause_time;
+      this.last_pause_time = current_time;
+    } else {
+      this.last_pause_time = 0; // Reset the pause time when rotation is enabled
+    }
+
+    // Calculate the adjusted game time and rotation time
+    this.game_time = current_time - this.paused_time;
+    if (this.rotation) {
+      this.rotation_time = this.game_time;
+    }
+
+    // Calculate the sun's position based on the current or last rotation angle
+    let sun_transform = model_transform.times(Mat4.rotation(this.rotation_time / 2, 1, 0, 0))
         .times(Mat4.translation(140, 100, -300))
         .times(Mat4.scale(10, 10, 10));
 
+    // Calculate the moon's position (180 degrees opposite to the sun)
+    let moon_transform = model_transform.times(Mat4.rotation(this.rotation_time / 2 + Math.PI, 1, 0, 0))
+        .times(Mat4.translation(140, 100, -300))
+        .times(Mat4.scale(10, 10, 10));
+
+    // Get the sun's world position
     let sun_position = sun_transform.times(vec4(0, 0, 0, 1));
+    // Get the moon's world position
+    let moon_position = moon_transform.times(vec4(0, 0, 0, 1));
 
-    let light_intensity = sun_position[1] < 0 ? 0 : 10**10;
+    // Determine the active light source and its intensity
+    let active_light_position, active_light_intensity;
+    if (sun_position[1] < 0) {
+      // Night time, use moonlight with significantly lower intensity
+      active_light_position = moon_position;
+      active_light_intensity = 10**4; // Considerably lower intensity for moonlight
+    } else {
+      // Day time, use sunlight with full intensity
+      active_light_position = sun_position;
+      active_light_intensity = 10**5; // Full intensity for sunlight
+    }
 
-    program_state.lights = [new Light(sun_position, color(1, 1, 1, 1), light_intensity)];
+    // Update light position to follow the active light source with adjusted intensity
+    program_state.lights = [new Light(active_light_position, color(1, 1, 1, 1), active_light_intensity)];
 
     if (!this.game_over) {
-      this.drop_piece(dt);
+      this.drop_piece(dt); // Use dt instead of current_time to control piece dropping speed
 
       let model_transform = Mat4.translation(this.piece_position.x * 2, this.piece_position.y * 2, 0).times(this.piece_rotation);
       this.current_piece.draw(context, program_state, model_transform, this.materials[this.current_piece.constructor.name.toLowerCase()]);
@@ -396,7 +452,8 @@ export class Tetris extends Scene {
     }
 
     let frame_transform = Mat4.translation(10, 20, 0);
-    this.shapes.frame.draw(context, program_state, frame_transform, this.materials.frame);
+    let frame_material = sun_position[1] < 0 ? this.materials.frame_night : this.materials.frame;
+    this.shapes.frame.draw(context, program_state, frame_transform, frame_material);
 
     this.draw_score(context, program_state);
 
@@ -407,12 +464,13 @@ export class Tetris extends Scene {
     this.drawSky(context, program_state, sky_transform, sun_position[1]);
 
     let ground_transform = model_transform.times(Mat4.scale(1000, .1, 1000));
-    this.drawGround(context, program_state, ground_transform);
+    this.drawGround(context, program_state, ground_transform, sun_position[1]);
 
-    let base_transform = model_transform.times(Mat4.translation(140, 0, 0));
-    this.shapes.cube.draw(context, program_state, base_transform, this.materials.test3);
-
+    // Draw the sun
     this.shapes.sphere.draw(context, program_state, sun_transform, this.materials.sun);
+
+    // Draw the moon
+    this.shapes.sphere.draw(context, program_state, moon_transform, this.materials.moon);
   }
 
 
@@ -421,8 +479,8 @@ export class Tetris extends Scene {
 
 
 
-}
 
+}
 
 class Gouraud_Shader extends Shader {
   // This is a Shader using Phong_Shader as template
