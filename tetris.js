@@ -32,7 +32,7 @@ export class Tetris extends Scene {
       tshape: new defs.TShape(),
       frame: new defs.RectangularFrame(),
       cube: new defs.Cube(),
-      //text: new Text_Line(35)
+      sphere: new defs.Subdivision_Sphere(4)
     };
 
     this.materials = {
@@ -47,6 +47,11 @@ export class Tetris extends Scene {
       scoreFrame: new Material(new defs.Phong_Shader(), { ambient: 1, diffusivity: 1, color: hex_color("#ba53ed") }),
       numbers: new Material(new defs.Phong_Shader(), { ambient: 1, diffusivity: 10, color: hex_color("#44fcf6") }),
       test2: new Material(new Gouraud_Shader(), { ambient: 0.4, diffusivity: 0.6, color: hex_color("#992828") }),
+      sky: new Material(new defs.Phong_Shader(), { ambient: 0.9, diffusivity: 0.001, color: hex_color("#87ceeb") }),
+      night_sky: new Material(new defs.Phong_Shader(), { ambient: 0.9, diffusivity: 0.001, color: hex_color("#142D38") }),
+      ground: new Material(new defs.Phong_Shader(), { ambient: 0.8, specularity: 0.3, diffusivity: 0.3, color: hex_color("#276221") }),
+      sun: new Material(new defs.Phong_Shader(), { ambient: 1, diffusivity: 1, color: hex_color("#FFFFFF") }),
+      test3: new Material(new defs.Phong_Shader(), { ambient: 1, diffusivity: 1, color: hex_color("#000000") }),
     };
 
     this.initial_camera_location = Mat4.look_at(
@@ -55,22 +60,52 @@ export class Tetris extends Scene {
         vec3(0, 1, 0)
     );
 
-    //this.gl = new Webgl_Manager();
-
-    //this.gl.backgroundColor = hex_color("#ffffff");
-
-    // Game grid (20 rows x 10 columns)
     this.grid = Array.from({ length: 20 }, () => Array(10).fill(null));
+    this.clouds = [];
 
-    // Current piece and its position
+    for (let i = 0; i < 5; i++) {
+      this.clouds.push(Mat4.translation(Math.random() * 300 - 150, 40 + Math.random() * 10, 50 + Math.random() * 20).times(Mat4.scale(10, 5, 5)));
+    }
+
     this.current_piece = null;
-    this.piece_position = { x: 5, y: 19 }; // Adjust to start from the top center
-    this.piece_rotation = Mat4.identity(); // Track the current rotation of the piece
+    this.piece_position = { x: 5, y: 19 };
+    this.piece_rotation = Mat4.identity();
 
-    // Start game loop
     this.start_game_loop();
   }
 
+  drawBush(context, program_state, matrix, tex){
+    let shrub = [
+      Mat4.translation(-.2, 0, 0),
+      Mat4.translation(.5, 0, 0),
+      Mat4.translation(.5, .3, 0),
+      Mat4.translation(.4, .3, .12),
+      Mat4.translation(.2, .6, .4),
+      Mat4.translation(-.5, 0, .6),
+      Mat4.translation(.2, .5, .1),
+      Mat4.translation(.1, .2, .4),
+      Mat4.translation(.7, .5, .3),
+      Mat4.translation(.2, .1, .6)
+    ]
+
+    for(let i = 0; i < 10; i++){
+      this.shapes.sphere.draw(context, program_state, this.Mat4.identity().times(Mat4.translation(0.1, 0.03, 0.1).times(matrix.times(shrub[i]))), tex);
+    }
+  }
+
+  drawSky(context, program_state, sky_transform, sun_y_position) {
+    let sky = sky_transform.times(Mat4.scale(500, 500, 500));
+    let sky_material = sun_y_position < 0 ? this.materials.night_sky : this.materials.sky;
+
+    this.shapes.sphere.draw(context, program_state, sky, sky_material);
+  }
+
+
+
+  drawGround(context, program_state, ground_transform){
+    ground_transform = ground_transform.times(Mat4.translation(0, -100, 0));
+    this.shapes.cube.draw(context, program_state, ground_transform, this.materials.ground);
+  }
 
   start_game_loop() {
     this.current_piece = this.generate_new_piece();
@@ -166,7 +201,7 @@ export class Tetris extends Scene {
   make_control_panel() {
     this.key_triggered_button("Move piece left", ["ArrowLeft"], () => this.move_piece(-1));
     this.key_triggered_button("Move piece right", ["ArrowRight"], () => this.move_piece(1));
-    this.key_triggered_button("Rotate piece", ["i"], () => this.rotate_piece());
+    this.key_triggered_button("Rotate piece", ["ArrowUp"], () => this.rotate_piece());
     this.key_triggered_button("Drop piece", ["ArrowDown"], () => this.drop_piece(1));
   }
 
@@ -188,52 +223,12 @@ export class Tetris extends Scene {
     }
   }
 
-  display(context, program_state) {
-    if (!context.scratchpad.controls) {
-      this.children.push(context.scratchpad.controls = new defs.Movement_Controls());
-      program_state.set_camera(this.initial_camera_location);
-    }
-
-    program_state.projection_transform = Mat4.perspective(Math.PI / 4, context.width / context.height, 0.1, 1000);
-    const t = program_state.animation_time / 1000, dt = program_state.animation_delta_time / 1000;
-
-    const light_position = vec4(0, 5, 5, 1);
-    program_state.lights = [new Light(light_position, color(1, 1, 1, 1), 1000)];
-
-    if (!this.game_over) {
-      this.drop_piece(dt);
-
-      let model_transform = Mat4.translation(this.piece_position.x * 2, this.piece_position.y * 2, 0).times(this.piece_rotation);
-      this.current_piece.draw(context, program_state, model_transform, this.materials[this.current_piece.constructor.name.toLowerCase()]);
-    }
-
-    for (let y = 0; y < this.grid.length; y++) {
-      for (let x = 0; x < this.grid[y].length; x++) {
-        if (this.grid[y][x]) {
-          let model_transform = Mat4.translation(x * 2, y * 2, 0);
-          this.shapes.cube.draw(context, program_state, model_transform, this.grid[y][x]);
-        }
-      }
-    }
-
-    // Draw the frame
-    let frame_transform = Mat4.translation(10, 20, 0);
-    this.shapes.frame.draw(context, program_state, frame_transform, this.materials.frame);
-
-    // Draw placeholder score
-    this.draw_score(context, program_state);
-
-    if (this.game_over) {
-      // Display game over message
-    }
-  }
-
   draw_score(context, program_state) {
     const score_position = { x: 30, y: 20 }; // Adjust as needed
     const score = 4200; // Placeholder score
-  
+
     let model_transform = Mat4.translation(score_position.x, score_position.y, 0);
-  
+
     // Define a more detailed mapping for digits (0-9) to cube configurations using a 4x8 matrix
     const digit_shapes = {
       0: [
@@ -337,34 +332,95 @@ export class Tetris extends Scene {
         [1, 1, 1, 1]
       ]
     };
-  
+
     const digits = score.toString().split('').map(Number);
     const cube_size = 0.5; // Decrease the cube size to prevent overlap
     const digit_spacing = 3; // Adjust the spacing between digits
-  
+
     digits.forEach((digit, digit_index) => {
       const digit_shape = digit_shapes[digit];
       for (let row = 0; row < digit_shape.length; row++) {
         for (let col = 0; col < digit_shape[row].length; col++) {
           if (digit_shape[row][col]) {
             let digit_transform = model_transform
-              .times(Mat4.translation(digit_index * digit_spacing + col * cube_size, -row * cube_size, 0))
-              .times(Mat4.scale(cube_size, cube_size, cube_size));
+                .times(Mat4.translation(digit_index * digit_spacing + col * cube_size, -row * cube_size, 0))
+                .times(Mat4.scale(cube_size, cube_size, cube_size));
             this.shapes.cube.draw(context, program_state, digit_transform, this.materials.numbers);
           }
         }
       }
     });
-  
+
     // Draw a frame around the score
     const frame_width = digits.length * digit_spacing * cube_size*2;
     const frame_height = 8 * cube_size;
     let frame_transform = Mat4.translation(score_position.x + frame_width / 2 - cube_size / 2, score_position.y - frame_height / 2 + cube_size / 2, 0)
-      .times(Mat4.scale(frame_width / 2 + cube_size, frame_height / 2 + cube_size, cube_size / 2));
+        .times(Mat4.scale(frame_width / 2 + cube_size, frame_height / 2 + cube_size, cube_size / 2));
     this.shapes.cube.draw(context, program_state, frame_transform, this.materials.scoreFrame);
   }
-   
-  
+
+  display(context, program_state) {
+    if (!context.scratchpad.controls) {
+      this.children.push(context.scratchpad.controls = new defs.Movement_Controls());
+      program_state.set_camera(this.initial_camera_location);
+    }
+
+    let model_transform = Mat4.identity();
+    program_state.projection_transform = Mat4.perspective(Math.PI / 4, context.width / context.height, 0.1, 1000);
+    const t = program_state.animation_time / 1000, dt = program_state.animation_delta_time / 1000;
+
+    let sun_transform = model_transform.times(Mat4.rotation(t / 3, 1, 0, 0))
+        .times(Mat4.translation(140, 100, -300))
+        .times(Mat4.scale(10, 10, 10));
+
+    let sun_position = sun_transform.times(vec4(0, 0, 0, 1));
+
+    let light_intensity = sun_position[1] < 0 ? 0 : 10**10;
+
+    program_state.lights = [new Light(sun_position, color(1, 1, 1, 1), light_intensity)];
+
+    if (!this.game_over) {
+      this.drop_piece(dt);
+
+      let model_transform = Mat4.translation(this.piece_position.x * 2, this.piece_position.y * 2, 0).times(this.piece_rotation);
+      this.current_piece.draw(context, program_state, model_transform, this.materials[this.current_piece.constructor.name.toLowerCase()]);
+    }
+
+    for (let y = 0; y < this.grid.length; y++) {
+      for (let x = 0; x < this.grid[y].length; x++) {
+        if (this.grid[y][x]) {
+          let model_transform = Mat4.translation(x * 2, y * 2, 0);
+          this.shapes.cube.draw(context, program_state, model_transform, this.grid[y][x]);
+        }
+      }
+    }
+
+    let frame_transform = Mat4.translation(10, 20, 0);
+    this.shapes.frame.draw(context, program_state, frame_transform, this.materials.frame);
+
+    this.draw_score(context, program_state);
+
+    if (this.game_over) {
+    }
+
+    let sky_transform = Mat4.identity();
+    this.drawSky(context, program_state, sky_transform, sun_position[1]);
+
+    let ground_transform = model_transform.times(Mat4.scale(1000, .1, 1000));
+    this.drawGround(context, program_state, ground_transform);
+
+    let base_transform = model_transform.times(Mat4.translation(140, 0, 0));
+    this.shapes.cube.draw(context, program_state, base_transform, this.materials.test3);
+
+    this.shapes.sphere.draw(context, program_state, sun_transform, this.materials.sun);
+  }
+
+
+
+
+
+
+
 }
 
 
