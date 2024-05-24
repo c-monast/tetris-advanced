@@ -32,6 +32,7 @@ export class Tetris extends Scene {
       tshape: new defs.TShape(),
       frame: new defs.RectangularFrame(),
       cube: new defs.Cube(),
+      //text: new Text_Line(35)
     };
 
     this.materials = {
@@ -43,6 +44,8 @@ export class Tetris extends Scene {
       jshape: new Material(new defs.Phong_Shader(), { ambient: 0.4, diffusivity: 0.6, color: hex_color("#3877ff") }),
       tshape: new Material(new defs.Phong_Shader(), { ambient: 0.4, diffusivity: 0.6, color: hex_color("#ff0d0d") }),
       frame: new Material(new defs.Phong_Shader(), { ambient: 0.4, diffusivity: 0.6, color: hex_color("#cccccc") }),
+      scoreFrame: new Material(new defs.Phong_Shader(), { ambient: 1, diffusivity: 1, color: hex_color("#ba53ed") }),
+      numbers: new Material(new defs.Phong_Shader(), { ambient: 1, diffusivity: 10, color: hex_color("#44fcf6") }),
       test2: new Material(new Gouraud_Shader(), { ambient: 0.4, diffusivity: 0.6, color: hex_color("#992828") }),
     };
 
@@ -52,7 +55,7 @@ export class Tetris extends Scene {
         vec3(0, 1, 0)
     );
 
-    this.gl = new Webgl_Manager();
+    //this.gl = new Webgl_Manager();
 
     //this.gl.backgroundColor = hex_color("#ffffff");
 
@@ -217,10 +220,151 @@ export class Tetris extends Scene {
     let frame_transform = Mat4.translation(10, 20, 0);
     this.shapes.frame.draw(context, program_state, frame_transform, this.materials.frame);
 
+    // Draw placeholder score
+    this.draw_score(context, program_state);
+
     if (this.game_over) {
       // Display game over message
     }
   }
+
+  draw_score(context, program_state) {
+    const score_position = { x: 30, y: 20 }; // Adjust as needed
+    const score = 4200; // Placeholder score
+  
+    let model_transform = Mat4.translation(score_position.x, score_position.y, 0);
+  
+    // Define a more detailed mapping for digits (0-9) to cube configurations using a 4x8 matrix
+    const digit_shapes = {
+      0: [
+        [1, 1, 1, 1],
+        [1, 0, 0, 1],
+        [1, 0, 0, 1],
+        [1, 0, 0, 1],
+        [1, 0, 0, 1],
+        [1, 0, 0, 1],
+        [1, 0, 0, 1],
+        [1, 1, 1, 1]
+      ],
+      1: [
+        [0, 1, 0, 0],
+        [1, 1, 0, 0],
+        [0, 1, 0, 0],
+        [0, 1, 0, 0],
+        [0, 1, 0, 0],
+        [0, 1, 0, 0],
+        [0, 1, 0, 0],
+        [1, 1, 1, 1]
+      ],
+      2: [
+        [1, 1, 1, 1],
+        [0, 0, 0, 1],
+        [0, 0, 0, 1],
+        [1, 1, 1, 1],
+        [1, 0, 0, 0],
+        [1, 0, 0, 0],
+        [1, 0, 0, 0],
+        [1, 1, 1, 1]
+      ],
+      3: [
+        [1, 1, 1, 1],
+        [0, 0, 0, 1],
+        [0, 0, 0, 1],
+        [1, 1, 1, 1],
+        [0, 0, 0, 1],
+        [0, 0, 0, 1],
+        [0, 0, 0, 1],
+        [1, 1, 1, 1]
+      ],
+      4: [
+        [1, 0, 0, 1],
+        [1, 0, 0, 1],
+        [1, 0, 0, 1],
+        [1, 1, 1, 1],
+        [0, 0, 0, 1],
+        [0, 0, 0, 1],
+        [0, 0, 0, 1],
+        [0, 0, 0, 1]
+      ],
+      5: [
+        [1, 1, 1, 1],
+        [1, 0, 0, 0],
+        [1, 0, 0, 0],
+        [1, 1, 1, 1],
+        [0, 0, 0, 1],
+        [0, 0, 0, 1],
+        [0, 0, 0, 1],
+        [1, 1, 1, 1]
+      ],
+      6: [
+        [1, 1, 1, 1],
+        [1, 0, 0, 0],
+        [1, 0, 0, 0],
+        [1, 1, 1, 1],
+        [1, 0, 0, 1],
+        [1, 0, 0, 1],
+        [1, 0, 0, 1],
+        [1, 1, 1, 1]
+      ],
+      7: [
+        [1, 1, 1, 1],
+        [0, 0, 0, 1],
+        [0, 0, 0, 1],
+        [0, 0, 0, 1],
+        [0, 0, 0, 1],
+        [0, 0, 0, 1],
+        [0, 0, 0, 1],
+        [0, 0, 0, 1]
+      ],
+      8: [
+        [1, 1, 1, 1],
+        [1, 0, 0, 1],
+        [1, 0, 0, 1],
+        [1, 1, 1, 1],
+        [1, 0, 0, 1],
+        [1, 0, 0, 1],
+        [1, 0, 0, 1],
+        [1, 1, 1, 1]
+      ],
+      9: [
+        [1, 1, 1, 1],
+        [1, 0, 0, 1],
+        [1, 0, 0, 1],
+        [1, 1, 1, 1],
+        [0, 0, 0, 1],
+        [0, 0, 0, 1],
+        [0, 0, 0, 1],
+        [1, 1, 1, 1]
+      ]
+    };
+  
+    const digits = score.toString().split('').map(Number);
+    const cube_size = 0.5; // Decrease the cube size to prevent overlap
+    const digit_spacing = 3; // Adjust the spacing between digits
+  
+    digits.forEach((digit, digit_index) => {
+      const digit_shape = digit_shapes[digit];
+      for (let row = 0; row < digit_shape.length; row++) {
+        for (let col = 0; col < digit_shape[row].length; col++) {
+          if (digit_shape[row][col]) {
+            let digit_transform = model_transform
+              .times(Mat4.translation(digit_index * digit_spacing + col * cube_size, -row * cube_size, 0))
+              .times(Mat4.scale(cube_size, cube_size, cube_size));
+            this.shapes.cube.draw(context, program_state, digit_transform, this.materials.numbers);
+          }
+        }
+      }
+    });
+  
+    // Draw a frame around the score
+    const frame_width = digits.length * digit_spacing * cube_size*2;
+    const frame_height = 8 * cube_size;
+    let frame_transform = Mat4.translation(score_position.x + frame_width / 2 - cube_size / 2, score_position.y - frame_height / 2 + cube_size / 2, 0)
+      .times(Mat4.scale(frame_width / 2 + cube_size, frame_height / 2 + cube_size, cube_size / 2));
+    this.shapes.cube.draw(context, program_state, frame_transform, this.materials.scoreFrame);
+  }
+   
+  
 }
 
 
