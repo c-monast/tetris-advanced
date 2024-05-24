@@ -46,9 +46,9 @@ export class Tetris extends Scene {
     };
 
     this.initial_camera_location = Mat4.look_at(
-      vec3(10, 10, 40),  // Camera position
-      vec3(5, 10, 0),    // Look at the center of the board
-      vec3(0, 1, 0)      // Up direction
+        vec3(10, 10, 40),  // Camera position
+        vec3(5, 10, 0),    // Look at the center of the board
+        vec3(0, 1, 0)      // Up direction
     );
 
     // Game grid (20 rows x 10 columns)
@@ -109,9 +109,9 @@ export class Tetris extends Scene {
   detect_collision(rotated_piece = false) {
     for (let i = 0; i < this.current_piece.arrays.position.length; i += 4) {
       let cube_position = vec3(
-        this.current_piece.arrays.position[i][0],
-        this.current_piece.arrays.position[i][1],
-        this.current_piece.arrays.position[i][2]
+          this.current_piece.arrays.position[i][0],
+          this.current_piece.arrays.position[i][1],
+          this.current_piece.arrays.position[i][2]
       );
 
       if (rotated_piece) {
@@ -131,9 +131,9 @@ export class Tetris extends Scene {
   merge_piece_to_grid() {
     for (let i = 0; i < this.current_piece.arrays.position.length; i += 4) {
       let cube_position = vec3(
-        this.current_piece.arrays.position[i][0],
-        this.current_piece.arrays.position[i][1],
-        this.current_piece.arrays.position[i][2]
+          this.current_piece.arrays.position[i][0],
+          this.current_piece.arrays.position[i][1],
+          this.current_piece.arrays.position[i][2]
       );
 
       cube_position = this.piece_rotation.times(vec4(cube_position, 1)).to3();
@@ -155,11 +155,10 @@ export class Tetris extends Scene {
   }
 
   make_control_panel() {
-<<<<<<< HEAD
-    this.key_triggered_button("Move piece left", ["j"], () => this.move_piece(-1));
-    this.key_triggered_button("Move piece right", ["l"], () => this.move_piece(1));
+    this.key_triggered_button("Move piece left", ["ArrowLeft"], () => this.move_piece(-1));
+    this.key_triggered_button("Move piece right", ["ArrowRight"], () => this.move_piece(1));
     this.key_triggered_button("Rotate piece", ["i"], () => this.rotate_piece());
-    this.key_triggered_button("Drop piece", ["s"], () => this.drop_piece(1));
+    this.key_triggered_button("Drop piece", ["ArrowDown"], () => this.drop_piece(1));
   }
 
   move_piece(direction) {
@@ -178,42 +177,6 @@ export class Tetris extends Scene {
       // If collision detected, revert rotation
       this.piece_rotation = Mat4.rotation(-Math.PI / 2, 0, 0, 1).times(this.piece_rotation);
     }
-=======
-    // Draw the scene's buttons, setup their actions and keyboard shortcuts, and monitor live measurements.
-    this.key_triggered_button(
-      "Rotate piece clockwise",
-      ["i"],
-      () => (this.attached = () => null)
-    );
-    this.new_line();
-    this.key_triggered_button(
-      "Move piece left",
-      ["ArrowLeft"],
-      () => (this.attached = () => this.planet_1)
-    );
-    this.key_triggered_button(
-      "Move piece right",
-      ["ArrowRight"],
-      () => (this.attached = () => this.planet_2)
-    );
-    this.new_line();
-    this.key_triggered_button(
-      "Move piece down",
-      ["ArrowDown"],
-      () => (this.attached = () => this.planet_3)
-    );
-    this.key_triggered_button(
-      "Switch between Day/Night",
-      ["i"],
-      () => (this.attached = () => this.planet_4)
-    );
-    this.new_line();
-    this.key_triggered_button(
-      "Rotate backgrounds",
-      ["o"],
-      () => (this.attached = () => this.moon)
-    );
->>>>>>> refs/remotes/origin/main
   }
 
   display(context, program_state) {
@@ -267,11 +230,11 @@ class Gouraud_Shader extends Shader {
   shared_glsl_code() {
     // ********* SHARED CODE, INCLUDED IN BOTH SHADERS *********
     return (
-      ` 
+        ` 
         precision mediump float;
         const int N_LIGHTS = ` +
-      this.num_lights +
-      `;
+        this.num_lights +
+        `;
         uniform float ambient, diffusivity, specularity, smoothness;
         uniform vec4 light_positions_or_vectors[N_LIGHTS], light_colors[N_LIGHTS];
         uniform float light_attenuation_factors[N_LIGHTS];
@@ -318,8 +281,8 @@ class Gouraud_Shader extends Shader {
   vertex_glsl_code() {
     // ********* VERTEX SHADER *********
     return (
-      this.shared_glsl_code() +
-      `
+        this.shared_glsl_code() +
+        `
             attribute vec3 position, normal;                            
             // Position is expressed in object coordinates.
             
@@ -341,8 +304,8 @@ class Gouraud_Shader extends Shader {
     // A fragment is a pixel that's overlapped by the current triangle.
     // Fragments affect the final image or get discarded due to depth.
     return (
-      this.shared_glsl_code() +
-      `
+        this.shared_glsl_code() +
+        `
             void main(){                                                           
                 // Compute an initial (ambient) color:
                 gl_FragColor = vec4( shape_color.xyz * ambient, shape_color.w );
@@ -365,14 +328,14 @@ class Gouraud_Shader extends Shader {
   send_gpu_state(gl, gpu, gpu_state, model_transform) {
     // send_gpu_state():  Send the state of our whole drawing context to the GPU.
     const O = vec4(0, 0, 0, 1),
-      camera_center = gpu_state.camera_transform.times(O).to3();
+        camera_center = gpu_state.camera_transform.times(O).to3();
     gl.uniform3fv(gpu.camera_center, camera_center);
     // Use the squared scale trick from "Eric's blog" instead of inverse transpose matrix:
     const squared_scale = model_transform
-      .reduce((acc, r) => {
-        return acc.plus(vec4(...r).times_pairwise(r));
-      }, vec4(0, 0, 0, 0))
-      .to3();
+        .reduce((acc, r) => {
+          return acc.plus(vec4(...r).times_pairwise(r));
+        }, vec4(0, 0, 0, 0))
+        .to3();
     gl.uniform3fv(gpu.squared_scale, squared_scale);
     // Send the current matrices to the shader.  Go ahead and pre-compute
     // the products we'll need of the of the three special matrices and just
@@ -380,37 +343,37 @@ class Gouraud_Shader extends Shader {
     // call, and thus across each instance of the vertex shader.
     // Transpose them since the GPU expects matrices as column-major arrays.
     const PCM = gpu_state.projection_transform
-      .times(gpu_state.camera_inverse)
-      .times(model_transform);
+        .times(gpu_state.camera_inverse)
+        .times(model_transform);
     gl.uniformMatrix4fv(
-      gpu.model_transform,
-      false,
-      Matrix.flatten_2D_to_1D(model_transform.transposed())
+        gpu.model_transform,
+        false,
+        Matrix.flatten_2D_to_1D(model_transform.transposed())
     );
     gl.uniformMatrix4fv(
-      gpu.projection_camera_model_transform,
-      false,
-      Matrix.flatten_2D_to_1D(PCM.transposed())
+        gpu.projection_camera_model_transform,
+        false,
+        Matrix.flatten_2D_to_1D(PCM.transposed())
     );
 
     // Omitting lights will show only the material color, scaled by the ambient term:
     if (!gpu_state.lights.length) return;
 
     const light_positions_flattened = [],
-      light_colors_flattened = [];
+        light_colors_flattened = [];
     for (let i = 0; i < 4 * gpu_state.lights.length; i++) {
       light_positions_flattened.push(
-        gpu_state.lights[Math.floor(i / 4)].position[i % 4]
+          gpu_state.lights[Math.floor(i / 4)].position[i % 4]
       );
       light_colors_flattened.push(
-        gpu_state.lights[Math.floor(i / 4)].color[i % 4]
+          gpu_state.lights[Math.floor(i / 4)].color[i % 4]
       );
     }
     gl.uniform4fv(gpu.light_positions_or_vectors, light_positions_flattened);
     gl.uniform4fv(gpu.light_colors, light_colors_flattened);
     gl.uniform1fv(
-      gpu.light_attenuation_factors,
-      gpu_state.lights.map((l) => l.attenuation)
+        gpu.light_attenuation_factors,
+        gpu_state.lights.map((l) => l.attenuation)
     );
   }
 
@@ -438,28 +401,28 @@ class Gouraud_Shader extends Shader {
 
 class Ring_Shader extends Shader {
   update_GPU(
-    context,
-    gpu_addresses,
-    graphics_state,
-    model_transform,
-    material
+      context,
+      gpu_addresses,
+      graphics_state,
+      model_transform,
+      material
   ) {
     // update_GPU():  Defining how to synchronize our JavaScript's variables to the GPU's:
     const [P, C, M] = [
-        graphics_state.projection_transform,
-        graphics_state.camera_inverse,
-        model_transform,
-      ],
-      PCM = P.times(C).times(M);
+          graphics_state.projection_transform,
+          graphics_state.camera_inverse,
+          model_transform,
+        ],
+        PCM = P.times(C).times(M);
     context.uniformMatrix4fv(
-      gpu_addresses.model_transform,
-      false,
-      Matrix.flatten_2D_to_1D(model_transform.transposed())
+        gpu_addresses.model_transform,
+        false,
+        Matrix.flatten_2D_to_1D(model_transform.transposed())
     );
     context.uniformMatrix4fv(
-      gpu_addresses.projection_camera_model_transform,
-      false,
-      Matrix.flatten_2D_to_1D(PCM.transposed())
+        gpu_addresses.projection_camera_model_transform,
+        false,
+        Matrix.flatten_2D_to_1D(PCM.transposed())
     );
   }
 
@@ -476,8 +439,8 @@ class Ring_Shader extends Shader {
     // ********* VERTEX SHADER *********
     // TODO:  Complete the main function of the vertex shader (Extra Credit Part II).
     return (
-      this.shared_glsl_code() +
-      `
+        this.shared_glsl_code() +
+        `
         attribute vec3 position;
         uniform mat4 model_transform;
         uniform mat4 projection_camera_model_transform;
@@ -492,8 +455,8 @@ class Ring_Shader extends Shader {
     // ********* FRAGMENT SHADER *********
     // TODO:  Complete the main function of the fragment shader (Extra Credit Part II).
     return (
-      this.shared_glsl_code() +
-      `
+        this.shared_glsl_code() +
+        `
         void main(){
           
         }`
