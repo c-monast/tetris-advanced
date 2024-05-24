@@ -16,6 +16,7 @@ const {
   Shader,
   Texture,
   Scene,
+    Webgl_Manager
 } = tiny;
 
 Object.assign(tiny, widgets);

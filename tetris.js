@@ -15,6 +15,7 @@ const {
   Shape,
   Material,
   Scene,
+    Webgl_Manager
 } = tiny;
 
 export class Tetris extends Scene {
@@ -46,10 +47,14 @@ export class Tetris extends Scene {
     };
 
     this.initial_camera_location = Mat4.look_at(
-        vec3(10, 10, 40),  // Camera position
-        vec3(5, 10, 0),    // Look at the center of the board
-        vec3(0, 1, 0)      // Up direction
+        vec3(11, 20, 60),
+        vec3(11, 20, 0),
+        vec3(0, 1, 0)
     );
+
+    this.gl = new Webgl_Manager();
+
+    //this.gl.backgroundColor = hex_color("#ffffff");
 
     // Game grid (20 rows x 10 columns)
     this.grid = Array.from({ length: 20 }, () => Array(10).fill(null));
@@ -62,6 +67,7 @@ export class Tetris extends Scene {
     // Start game loop
     this.start_game_loop();
   }
+
 
   start_game_loop() {
     this.current_piece = this.generate_new_piece();
@@ -77,7 +83,7 @@ export class Tetris extends Scene {
     const random_piece = pieces[Math.floor(Math.random() * pieces.length)];
     return this.shapes[random_piece];
   }
-
+  // This is causing the issue with pieces terminating early
   get_piece_height(piece) {
     // Calculate the height of the piece based on its shape
     let maxY = 0;
