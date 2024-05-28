@@ -1,5 +1,5 @@
-import { tiny } from "../tiny-graphics.js";
-import { widgets } from "../tiny-graphics-widgets.js";
+import { tiny } from "./tiny-graphics.js";
+import { widgets } from "./tiny-graphics-widgets.js";
 // Pull these names into this module's scope for convenience:
 const {
   Vector,
@@ -16,7 +16,7 @@ const {
   Shader,
   Texture,
   Scene,
-    Webgl_Manager
+  Webgl_Manager,
 } = tiny;
 
 Object.assign(tiny, widgets);
@@ -26,13 +26,8 @@ const defs = {};
 export { tiny, defs };
 
 const Square = (defs.Square = class Square extends Shape {
-  // **Square** demonstrates two triangles that share vertices.  On any planar surface, the
-  // interior edges don't make any important seams.  In these cases there's no reason not
-  // to re-use data of the common vertices between triangles.  This makes all the vertex
-  // arrays (position, normals, etc) smaller and more cache friendly.
   constructor() {
     super("position", "normal", "texture_coord");
-    // Specify the 4 square corner locations, and match those up with normal vectors:
     this.arrays.position = Vector3.cast(
       [-1, -1, 0],
       [1, -1, 0],
@@ -45,19 +40,14 @@ const Square = (defs.Square = class Square extends Shape {
       [0, 0, 1],
       [0, 0, 1]
     );
-    // Arrange the vertices into a square shape in texture space too:
     this.arrays.texture_coord = Vector.cast([0, 0], [1, 0], [0, 1], [1, 1]);
-    // Use two triangles this time, indexing into four distinct vertices:
     this.indices.push(0, 1, 2, 1, 3, 2);
   }
 });
+
 const Cube = (defs.Cube = class Cube extends Shape {
-  // **Cube** A closed 3D shape, and the first example of a compound shape (a Shape constructed
-  // out of other Shapes).  A cube inserts six Square strips into its own arrays, using six
-  // different matrices as offsets for each square.
   constructor() {
     super("position", "normal", "texture_coord");
-    // Loop 3 times (for each axis), and inside loop twice (for opposing cube sides):
     for (let i = 0; i < 3; i++)
       for (let j = 0; j < 2; j++) {
         const square_transform = Mat4.rotation(
@@ -70,60 +60,48 @@ const Cube = (defs.Cube = class Cube extends Shape {
             Mat4.rotation(Math.PI * j - (i == 1 ? Math.PI / 2 : 0), 0, 1, 0)
           )
           .times(Mat4.translation(0, 0, 1));
-        // Calling this function of a Square (or any Shape) copies it into the specified
-        // Shape (this one) at the specified matrix offset (square_transform):
         Square.insert_transformed_copy_into(this, [], square_transform);
       }
   }
 });
 
 const IShape = (defs.IShape = class IShape extends Shape {
-  // **IShape** A 3D shape representing a 4x1 line, composed of four cubes.
   constructor() {
     super("position", "normal", "texture_coord");
-    // Loop 4 times to create a 4x1 line shape:
     for (let i = 0; i < 4; i++) {
-      const cube_transform = Mat4.translation(2 * i, 0, 0); // Adjust positions to form a straight line
+      const cube_transform = Mat4.translation(2 * i, 0, 0);
       Cube.insert_transformed_copy_into(this, [], cube_transform);
     }
   }
 });
 
 const LShape = (defs.LShape = class LShape extends Shape {
-  // **LShape** A 3D shape representing an L shape from Tetris, composed of four cubes.
   constructor() {
     super("position", "normal", "texture_coord");
-    // Insert the first three cubes in a vertical line:
     for (let i = 0; i < 3; i++) {
-      const cube_transform = Mat4.translation(0, 2 * i, 0); // Vertical line
+      const cube_transform = Mat4.translation(0, 2 * i, 0);
       Cube.insert_transformed_copy_into(this, [], cube_transform);
     }
-    // Insert the fourth cube to create the L shape:
-    const cube_transform = Mat4.translation(2, 0, 0); // Correct position for the bottom cube of the L shape
+    const cube_transform = Mat4.translation(2, 0, 0);
     Cube.insert_transformed_copy_into(this, [], cube_transform);
   }
 });
 
 const TShape = (defs.TShape = class TShape extends Shape {
-  // **TShape** A 3D shape representing a T shape from Tetris, composed of four cubes.
   constructor() {
     super("position", "normal", "texture_coord");
-    // Insert the horizontal line (three cubes):
     for (let i = 0; i < 3; i++) {
-      const cube_transform = Mat4.translation(2 * (i - 1), 0, 0); // Horizontal line centered on the origin
+      const cube_transform = Mat4.translation(2 * (i - 1), 0, 0);
       Cube.insert_transformed_copy_into(this, [], cube_transform);
     }
-    // Insert the fourth cube to create the T shape:
-    const cube_transform = Mat4.translation(0, 2, 0); // Top cube of the T shape
+    const cube_transform = Mat4.translation(0, 2, 0);
     Cube.insert_transformed_copy_into(this, [], cube_transform);
   }
 });
 
 const OShape = (defs.OShape = class OShape extends Shape {
-  // **OShape** A 3D shape representing an O shape from Tetris, composed of four cubes.
   constructor() {
     super("position", "normal", "texture_coord");
-    // Insert four cubes to form the O shape:
     for (let x = 0; x < 2; x++) {
       for (let y = 0; y < 2; y++) {
         const cube_transform = Mat4.translation(2 * x, 2 * y, 0);
@@ -134,10 +112,8 @@ const OShape = (defs.OShape = class OShape extends Shape {
 });
 
 const SShape = (defs.SShape = class SShape extends Shape {
-  // **SShape** A 3D shape representing an S shape from Tetris, composed of four cubes.
   constructor() {
     super("position", "normal", "texture_coord");
-    // Insert cubes to form the S shape:
     Cube.insert_transformed_copy_into(this, [], Mat4.translation(0, 0, 0));
     Cube.insert_transformed_copy_into(this, [], Mat4.translation(2, 0, 0));
     Cube.insert_transformed_copy_into(this, [], Mat4.translation(2, 2, 0));
@@ -146,10 +122,8 @@ const SShape = (defs.SShape = class SShape extends Shape {
 });
 
 const ZShape = (defs.ZShape = class ZShape extends Shape {
-  // **ZShape** A 3D shape representing a Z shape from Tetris, composed of four cubes.
   constructor() {
     super("position", "normal", "texture_coord");
-    // Insert cubes to form the Z shape:
     Cube.insert_transformed_copy_into(this, [], Mat4.translation(0, 2, 0));
     Cube.insert_transformed_copy_into(this, [], Mat4.translation(2, 2, 0));
     Cube.insert_transformed_copy_into(this, [], Mat4.translation(2, 0, 0));
@@ -158,46 +132,34 @@ const ZShape = (defs.ZShape = class ZShape extends Shape {
 });
 
 const JShape = (defs.JShape = class JShape extends Shape {
-  // **JShape** A 3D shape representing a J shape from Tetris, composed of four cubes.
   constructor() {
     super("position", "normal", "texture_coord");
-    // Insert the first three cubes in a vertical line:
     for (let i = 0; i < 3; i++) {
-      const cube_transform = Mat4.translation(0, 2 * i, 0); // Vertical line
+      const cube_transform = Mat4.translation(0, 2 * i, 0);
       Cube.insert_transformed_copy_into(this, [], cube_transform);
     }
-    // Insert the fourth cube to create the J shape:
-    const cube_transform = Mat4.translation(-2, 0, 0); // Correct position for the bottom cube of the J shape
+    const cube_transform = Mat4.translation(-2, 0, 0);
     Cube.insert_transformed_copy_into(this, [], cube_transform);
   }
 });
 
 const RectangularFrame =
   (defs.RectangularFrame = class RectangularFrame extends Shape {
-    // **RectangularFrame** defines a hollow rectangular frame in 3D space using cubes.
     constructor() {
       super("position", "normal", "texture_coord");
 
-      // Number of cubes in the play area
-      const playAreaX = 10; // Width of the play area in cubes
-      const playAreaY = 20; // Height of the play area in cubes
-
-      // Frame width in cubes
+      const playAreaX = 10;
+      const playAreaY = 20;
       const frameWidth = 1;
-
-      // Outer dimensions of the frame
       const outerX = playAreaX / 2 + frameWidth;
       const outerY = playAreaY / 2 + frameWidth;
 
-      // Add top and bottom edges
       for (let i = -outerX; i <= outerX; i++) {
-        // Top edge
         Cube.insert_transformed_copy_into(
           this,
           [],
           Mat4.translation(i * 2, outerY * 2, 0)
         );
-        // Bottom edge
         Cube.insert_transformed_copy_into(
           this,
           [],
@@ -205,15 +167,12 @@ const RectangularFrame =
         );
       }
 
-      // Add left and right edges
       for (let i = -outerY + 1; i < outerY; i++) {
-        // Left edge
         Cube.insert_transformed_copy_into(
           this,
           [],
           Mat4.translation(-outerX * 2, i * 2, 0)
         );
-        // Right edge
         Cube.insert_transformed_copy_into(
           this,
           [],
@@ -223,6 +182,7 @@ const RectangularFrame =
     }
   });
 
+<<<<<<< HEAD:examples/common.js
 const Subdivision_Sphere = defs.Subdivision_Sphere =
     class Subdivision_Sphere extends Shape {
       // **Subdivision_Sphere** defines a Sphere surface, with nice uniform triangles.  A subdivision surface
@@ -301,6 +261,110 @@ const Subdivision_Sphere = defs.Subdivision_Sphere =
         this.subdivide_triangle(ab, bc, ac, count - 1);
       }
     }
+=======
+defs.digit_shapes = {
+  0: [
+    [1, 1, 1, 1],
+    [1, 0, 0, 1],
+    [1, 0, 0, 1],
+    [1, 0, 0, 1],
+    [1, 0, 0, 1],
+    [1, 0, 0, 1],
+    [1, 0, 0, 1],
+    [1, 1, 1, 1],
+  ],
+  1: [
+    [0, 1, 0, 0],
+    [1, 1, 0, 0],
+    [0, 1, 0, 0],
+    [0, 1, 0, 0],
+    [0, 1, 0, 0],
+    [0, 1, 0, 0],
+    [0, 1, 0, 0],
+    [1, 1, 1, 1],
+  ],
+  2: [
+    [1, 1, 1, 1],
+    [0, 0, 0, 1],
+    [0, 0, 0, 1],
+    [1, 1, 1, 1],
+    [1, 0, 0, 0],
+    [1, 0, 0, 0],
+    [1, 0, 0, 0],
+    [1, 1, 1, 1],
+  ],
+  3: [
+    [1, 1, 1, 1],
+    [0, 0, 0, 1],
+    [0, 0, 0, 1],
+    [1, 1, 1, 1],
+    [0, 0, 0, 1],
+    [0, 0, 0, 1],
+    [0, 0, 0, 1],
+    [1, 1, 1, 1],
+  ],
+  4: [
+    [1, 0, 0, 1],
+    [1, 0, 0, 1],
+    [1, 0, 0, 1],
+    [1, 1, 1, 1],
+    [0, 0, 0, 1],
+    [0, 0, 0, 1],
+    [0, 0, 0, 1],
+    [0, 0, 0, 1],
+  ],
+  5: [
+    [1, 1, 1, 1],
+    [1, 0, 0, 0],
+    [1, 0, 0, 0],
+    [1, 1, 1, 1],
+    [0, 0, 0, 1],
+    [0, 0, 0, 1],
+    [0, 0, 0, 1],
+    [1, 1, 1, 1],
+  ],
+  6: [
+    [1, 1, 1, 1],
+    [1, 0, 0, 0],
+    [1, 0, 0, 0],
+    [1, 1, 1, 1],
+    [1, 0, 0, 1],
+    [1, 0, 0, 1],
+    [1, 0, 0, 1],
+    [1, 1, 1, 1],
+  ],
+  7: [
+    [1, 1, 1, 1],
+    [0, 0, 0, 1],
+    [0, 0, 0, 1],
+    [0, 0, 0, 1],
+    [0, 0, 0, 1],
+    [0, 0, 0, 1],
+    [0, 0, 0, 1],
+    [0, 0, 0, 1],
+  ],
+  8: [
+    [1, 1, 1, 1],
+    [1, 0, 0, 1],
+    [1, 0, 0, 1],
+    [1, 1, 1, 1],
+    [1, 0, 0, 1],
+    [1, 0, 0, 1],
+    [1, 0, 0, 1],
+    [1, 1, 1, 1],
+  ],
+  9: [
+    [1, 1, 1, 1],
+    [1, 0, 0, 1],
+    [1, 0, 0, 1],
+    [1, 1, 1, 1],
+    [0, 0, 0, 1],
+    [0, 0, 0, 1],
+    [0, 0, 0, 1],
+    [1, 1, 1, 1],
+  ],
+};
+>>>>>>> main:common.js
 
 const Axis_Arrows = (defs.Axis_Arrows = class Axis_Arrows extends Shape {
   // An axis set with arrows, made out of a lot of various primitives.
