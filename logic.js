@@ -1,3 +1,7 @@
+import { tiny } from "./common.js";
+const { Mat4, vec3, vec4 } = tiny;
+
+
 export function start_game_loop() {
     this.current_piece = this.generate_new_piece();
     this.piece_position = {
