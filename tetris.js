@@ -20,6 +20,33 @@ const {
   Webgl_Manager,
 } = tiny;
 
+class Cube_Outline extends Shape {
+  constructor() {
+    super("position", "color");
+    //  TODO (Requirement 5).
+    // When a set of lines is used in graphics, you should think of the list entries as
+    // broken down into pairs; each pair of vertices will be drawn as a line segment.
+    // Note: since the outline is rendered with Basic_shader, you need to redefine the
+    // position and color of each vertex
+    this.arrays.position = Vector3.cast( // X Y Z
+        [-1, -1, -1], [1, -1, -1],
+        [-1, -1, -1], [-1, 1, -1],
+        [-1, -1, -1], [-1, -1, 1], [-1, -1, 1], [1, -1, 1],
+        [-1, -1, 1], [-1, 1, 1], [-1, 1, -1], [-1, 1, 1],
+        [-1, 1, -1], [-1, 1, 1], [-1, 1, -1], [1, 1, -1],
+        [-1, 1, 1], [1, 1, 1], [1, -1, -1], [1, 1, -1],
+        [1, -1, 1], [1, 1, 1], [1, 1, -1], [1, 1, 1], [1, -1, -1], [1, -1, 1]
+    );
+    this.arrays.color = [
+      vec4(1,1,1,1), vec4(1,1,1,1), vec4(1,1,1,1), vec4(1,1,1,1), vec4(1,1,1,1), vec4(1,1,1,1), vec4(1,1,1,1), vec4(1,1,1,1),
+      vec4(1,1,1,1), vec4(1,1,1,1), vec4(1,1,1,1), vec4(1,1,1,1), vec4(1,1,1,1), vec4(1,1,1,1), vec4(1,1,1,1), vec4(1,1,1,1),
+      vec4(1,1,1,1), vec4(1,1,1,1), vec4(1,1,1,1), vec4(1,1,1,1), vec4(1,1,1,1), vec4(1,1,1,1),  vec4(1,1,1,1), vec4(1,1,1,1),
+      vec4(1,1,1,1), vec4(1,1,1,1),
+    ];
+    this.indices = false;
+  }
+}
+
 export class Tetris extends Scene {
   constructor() {
     super();
@@ -35,6 +62,7 @@ export class Tetris extends Scene {
       frame: new defs.RectangularFrame(),
       cube: new defs.Cube(),
       sphere: new defs.Subdivision_Sphere(4),
+      outline: new Cube_Outline()
     };
 
     this.materials = {
@@ -145,12 +173,12 @@ export class Tetris extends Scene {
     );
 
     this.grid = Array.from({ length: 20 }, () => Array(10).fill(null));
-    this.clouds = [];
     this.rotation = true;
     this.paused_time = 0;
     this.last_pause_time = 0;
     this.game_time = 0;
     this.rotation_time = 0;
+    this.white = new Material(new defs.Basic_Shader());
 
     this.current_piece = null;
 
@@ -387,6 +415,16 @@ export class Tetris extends Scene {
       moon_transform,
       this.materials.moon
     );
+
+    for (let i = 0; i < 22; i++) {
+      for (let j = 0; j < 11; j++) {
+        this.shapes.outline.draw(context, program_state, model_transform, this.white, "LINES");
+        model_transform = model_transform.times(Mat4.translation(2,0,0));
+      }
+      model_transform = Mat4.identity().times(Mat4.translation(0,2*i,0));
+    }
+
+
   }
 
   draw_score(context, program_state) {
