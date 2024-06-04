@@ -1,5 +1,6 @@
 import {defs, tiny} from './common.js';
 import {Tetris} from "./tetris.js";
+import {Transforms_Sandbox} from "./transforms-sandbox.js";
 
 // Pull these names into this module's scope for convenience:
 const {

@@ -17,8 +17,22 @@ const {
   Shape,
   Material,
   Scene,
+  Texture,
   Webgl_Manager,
 } = tiny;
+
+class Pyramid extends Shape {
+  constructor() {
+    super("position", "normal");
+    this.arrays.position = Vector3.cast(
+        [1, 0, 0], [0, 0,-1], [-1, 0, 0],[0, 0, 1], [0, 2, 0], [-1, 0, 0], [0,0,1]
+    );
+    this.arrays.normal = Vector3.cast(
+        [1, 0, 0], [0,0,-1], [-1,0,0],[0,0,1], [0,1,0]
+    );
+    this.indices.push(0,1,4, 5,1,4, 5,6,4, 0,3,4, 1,0,3, 1,2,3 ) //,2,3,1,0,4,3)
+  }
+}
 
 class Cube_Outline extends Shape {
   constructor() {
@@ -62,7 +76,8 @@ export class Tetris extends Scene {
       frame: new defs.RectangularFrame(),
       cube: new defs.Cube(),
       sphere: new defs.Subdivision_Sphere(4),
-      outline: new Cube_Outline()
+      outline: new Cube_Outline(),
+      pyramid: new Pyramid()
     };
 
     this.materials = {
@@ -164,13 +179,26 @@ export class Tetris extends Scene {
         color: hex_color("#000000"),
         specularity: 0,
       }),
+      tree: new Material(new defs.Phong_Shader(), {
+        ambient: 0.8,
+        specularity: 0.3,
+        diffusivity: 0.3,
+        color: hex_color("#14381d"),
+        //texture: Texture("assets/static.jpg")
+      }),
+      wood: new Material(new defs.Phong_Shader(), {
+        ambient: 0.8,
+        specularity: 0.3,
+        diffusivity: 0.3,
+        color: hex_color("#563232"),
+      }),
     };
-
     this.initial_camera_location = Mat4.look_at(
       vec3(11, 20, 60),
       vec3(11, 20, 0),
       vec3(0, 1, 0)
     );
+
 
     this.grid = Array.from({ length: 20 }, () => Array(10).fill(null));
     this.rotation = true;
@@ -184,6 +212,20 @@ export class Tetris extends Scene {
 
     this.piece_position = { x: 5, y: 20 };
     this.piece_rotation = Mat4.identity();
+
+    this.tree_locations = [];
+    for(let i = 0; i < 20; i++){
+      while (true){
+        let x = Math.random() * -110;
+        let z = Math.random() * -140;
+        if (z <= 10 && z >= -10 && x <= -4 && x >= -3 && z !== 0){
+          continue;
+        }
+        this.tree_locations.push(Mat4.translation(x, -1.5, z));
+        break;
+      }
+    }
+
 
     this.start_game_loop();
   }
@@ -207,6 +249,25 @@ export class Tetris extends Scene {
       ground_material
     );
   }
+
+  drawTree(context, program_state, wood_transform, tree_transform, x, z) {
+    // Apply the initial translation by x and z to the transforms
+    wood_transform = wood_transform.times(Mat4.translation(x, -1.5, z)).times(
+        Mat4.scale(0.5, 2, 0.5));
+    tree_transform = tree_transform.times(Mat4.translation(x, -1.5, z)).times(
+        Mat4.scale(2, 1, 2));
+
+    // Draw the wood
+    this.shapes.cube.draw(context, program_state, wood_transform, this.materials.wood);
+
+    // Draw the tree leaves
+    for (let i = 0; i < 4; i++) {
+      tree_transform = tree_transform.times(Mat4.translation(0, 0.8, 0));
+      this.shapes.pyramid.draw(context, program_state, tree_transform, this.materials.tree);
+    }
+  }
+
+
 
   start_game_loop() {
     logic.start_game_loop.call(this);
@@ -311,13 +372,13 @@ export class Tetris extends Scene {
 
     // Calculate the sun's position based on the current or last rotation angle
     let sun_transform = model_transform
-      .times(Mat4.rotation(this.rotation_time / 4, 1, 0, 0))
+      .times(Mat4.rotation(this.rotation_time / 40, 1, 0, 0))
       .times(Mat4.translation(140, 100, -300))
       .times(Mat4.scale(10, 10, 10));
 
     // Calculate the moon's position (180 degrees opposite to the sun)
     let moon_transform = model_transform
-      .times(Mat4.rotation(this.rotation_time / 4 + Math.PI, 1, 0, 0))
+      .times(Mat4.rotation(this.rotation_time / 40 + Math.PI, 1, 0, 0))
       .times(Mat4.translation(140, 100, -300))
       .times(Mat4.scale(10, 10, 10));
 
@@ -329,23 +390,24 @@ export class Tetris extends Scene {
     // Determine the active light source and its intensity
     let active_light_position, active_light_intensity;
     if (sun_position[1] < 0) {
-      // Night time, use moonlight with significantly lower intensity
+      // Night time, use moonlight with intensity based on moon's y position
       active_light_position = moon_position;
-      active_light_intensity = 11 ** 4; // Considerably lower intensity for moonlight
+      active_light_intensity = 10 ** 4 * Math.max(0, moon_position[1] / 200); // Adjusted intensity for moonlight based on y position
     } else {
-      // Day time, use sunlight with full intensity
+      // Day time, use sunlight with intensity based on sun's y position
       active_light_position = sun_position;
-      active_light_intensity = 10 ** 5; // Full intensity for sunlight
+      active_light_intensity = 10 ** 5 * Math.max(0, sun_position[1] / 200); // Adjusted intensity for sunlight based on y position
     }
 
     // Update light position to follow the active light source with adjusted intensity
     program_state.lights = [
       new Light(
-        active_light_position,
-        color(1, 1, 1, 1),
-        active_light_intensity
+          active_light_position,
+          color(1, 1, 1, 1),
+          active_light_intensity
       ),
     ];
+
 
     if (!this.game_over) {
       this.drop_piece(dt); // Use dt instead of current_time to control piece dropping speed
@@ -424,6 +486,12 @@ export class Tetris extends Scene {
       model_transform = Mat4.identity().times(Mat4.translation(0,2*i,0));
     }
 
+    let tree_transform = Mat4.identity();
+    let wood_transform = Mat4.identity();
+
+    for (let i = 0; i < 20; i++) {
+      this.drawTree(context, program_state, tree_transform.times(this.tree_locations[i]), wood_transform.times(this.tree_locations[i]), 60, -10);
+    }
 
   }
 

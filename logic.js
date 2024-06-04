@@ -6,7 +6,7 @@ export function start_game_loop() {
     this.current_piece = this.generate_new_piece();
     this.piece_position = {
       x: 5,
-      y: 20 - this.get_piece_height(this.current_piece),
+      y: 24 - this.get_piece_height(this.current_piece),
     };
     this.piece_rotation = Mat4.identity();
     this.next_drop_time = 0;
