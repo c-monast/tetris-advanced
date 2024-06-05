@@ -192,7 +192,7 @@ export function render_scene(
   for (let y = 0; y < this.grid.length; y++) {
     for (let x = 0; x < this.grid[y].length; x++) {
       if (this.grid[y][x]) {
-        let model_transform = Mat4.translation(x * 2, y * 2, 0);
+        let model_transform = Mat4.translation(x, y, 0);
         this.shapes.cube.draw(
           context,
           program_state,

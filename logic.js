@@ -2,6 +2,7 @@ import { tiny } from "./common.js";
 const { Mat4, vec3, vec4 } = tiny;
 
 export function start_game_loop() {
+  this.grid = Array.from({ length: 20 }, () => Array(10).fill(null)); // Initialize the grid
   this.current_piece = this.generate_new_piece();
   this.piece_position = {
     x: 5, // Centered within the play area
@@ -148,7 +149,7 @@ export function drop_piece(dt) {
         console.log("Game Over");
       }
     }
-    console.log("Piece position after dropping:", this.piece_position);
+    //console.log("Piece position after dropping:", this.piece_position);
     this.next_drop_time = 1;
   }
 }
@@ -160,8 +161,8 @@ export function add_piece_to_grid() {
 
   for (let i = 0; i < piece.arrays.position.length; i++) {
     const cube = piece.arrays.position[i];
-    const gridX = Math.floor(position.x + cube[0] / 2);
-    const gridY = Math.floor(position.y + cube[1] / 2);
+    const gridX = Math.floor(position.x + cube[0]);
+    const gridY = Math.floor(position.y + cube[1]);
 
     if (gridY >= 0 && gridY < this.grid.length && gridX >= 0 && gridX < this.grid[0].length) {
       this.grid[gridY][gridX] = material;
@@ -190,7 +191,7 @@ export function check_collision_with_frame(newPosition, piece = this.current_pie
     const newX = newPosition.x + cubeX;
     const newY = newPosition.y + cubeY;
 
-    if (newX < playAreaMinX || newX > playAreaMaxX || newY < 0 || (newY < this.grid.length && newY >= 0 && this.grid[newY]?.[newX])) {
+    if (newX < playAreaMinX || newX > playAreaMaxX || newY < 0 || (newY < this.grid.length && newY >= 0 && this.grid[newY]?.[Math.floor(newX / 2)])) {
       return true;
     }
   }
