@@ -298,11 +298,11 @@ const RectangularFrame =
             const outerY = playAreaY / 2 + frameWidth;
 
             for (let i = -outerX; i <= outerX; i++) {
-                Cube.insert_transformed_copy_into(
-                    this,
-                    [],
-                    Mat4.translation(i * 2, outerY * 2, 0)
-                );
+                // Cube.insert_transformed_copy_into(
+                //     this,
+                //     [],
+                //     Mat4.translation(i * 2, outerY * 2, 0)
+                // );
                 Cube.insert_transformed_copy_into(
                     this,
                     [],

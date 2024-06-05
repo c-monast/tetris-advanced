@@ -1,5 +1,4 @@
 import { defs, tiny } from "./common.js";
-// Pull these names into this module's scope for convenience:
 const {
   vec3,
   vec4,
@@ -32,8 +31,9 @@ import {
   LIGHT_DEPTH_TEX_SIZE,
 } from "./shader.js";
 import * as logic from "./logic.js";
+import * as renderer from "./renderer.js";
+import * as scoreboard from "./scoreboard.js";
 
-// The scene
 export class Tetris extends Scene {
   constructor() {
     super();
@@ -196,7 +196,6 @@ export class Tetris extends Scene {
       }
     }
 
-    this.grid = Array.from({ length: 20 }, () => Array(10).fill(null));
     this.rotation = true;
     this.paused_time = 0;
     this.last_pause_time = 0;
@@ -210,43 +209,29 @@ export class Tetris extends Scene {
 
     // To make sure texture initialization only does once
     this.init_ok = false;
+
+    // Bind the logic functions to this instance
+    this.start_game_loop = logic.start_game_loop.bind(this);
+    this.generate_new_piece = logic.generate_new_piece.bind(this);
+    this.get_piece_height = logic.get_piece_height.bind(this);
+    this.get_piece_dimensions = logic.get_piece_dimensions.bind(this);
+    this.drop_piece = logic.drop_piece.bind(this);
+    this.rotate_piece = logic.rotate_piece.bind(this);
+    this.move_piece = logic.move_piece.bind(this);
+    this.check_collision_with_frame =
+      logic.check_collision_with_frame.bind(this);
+    this.try_rotation = logic.try_rotation.bind(this);
+    this.add_piece_to_grid = logic.add_piece_to_grid.bind(this);
+    this.clear_full_rows = logic.clear_full_rows.bind(this);
+
+    this.texture_buffer_init = renderer.texture_buffer_init.bind(this);
+    this.render_scene = renderer.render_scene.bind(this);
+    this.drawTree = renderer.drawTree.bind(this);
+
+    this.draw_score = scoreboard.draw_score.bind(this);
+
+    // Start the game loop
     this.start_game_loop();
-  }
-
-  start_game_loop() {
-    logic.start_game_loop.call(this);
-  }
-
-  generate_new_piece() {
-    return logic.generate_new_piece.call(this);
-  }
-
-  get_piece_height(piece) {
-    return logic.get_piece_height.call(this, piece);
-  }
-
-  drop_piece(dt) {
-    logic.drop_piece.call(this, dt);
-  }
-
-  detect_collision(rotated_piece = false) {
-    return logic.detect_collision.call(this, rotated_piece);
-  }
-
-  detect_collision_with_rotation(rotation, position) {
-    return logic.detect_collision_with_rotation.call(this, rotation, position);
-  }
-
-  merge_piece_to_grid() {
-    logic.merge_piece_to_grid.call(this);
-  }
-
-  clear_full_rows() {
-    logic.clear_full_rows.call(this);
-  }
-
-  rotate_piece() {
-    logic.rotate_piece.call(this);
   }
 
   make_control_panel() {
@@ -265,256 +250,6 @@ export class Tetris extends Scene {
     this.key_triggered_button("Stop Day/Night cycle", ["g"], () => {
       this.rotation ^= 1;
     });
-  }
-
-  move_piece(direction) {
-    this.piece_position.x += direction;
-    if (this.detect_collision(this.piece_rotation, this.piece_position)) {
-      this.piece_position.x -= direction;
-    }
-  }
-
-  texture_buffer_init(gl) {
-    // Depth Texture
-    this.lightDepthTexture = gl.createTexture();
-    // Bind it to TinyGraphics
-    this.light_depth_texture = new Buffered_Texture(this.lightDepthTexture);
-    this.stars.light_depth_texture = this.light_depth_texture;
-    this.floor.light_depth_texture = this.light_depth_texture;
-
-    this.lightDepthTextureSize = LIGHT_DEPTH_TEX_SIZE;
-    gl.bindTexture(gl.TEXTURE_2D, this.lightDepthTexture);
-    gl.texImage2D(
-      gl.TEXTURE_2D, // target
-      0, // mip level
-      gl.DEPTH_COMPONENT, // internal format
-      this.lightDepthTextureSize, // width
-      this.lightDepthTextureSize, // height
-      0, // border
-      gl.DEPTH_COMPONENT, // format
-      gl.UNSIGNED_INT, // type
-      null
-    ); // data
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-
-    // Depth Texture Buffer
-    this.lightDepthFramebuffer = gl.createFramebuffer();
-    gl.bindFramebuffer(gl.FRAMEBUFFER, this.lightDepthFramebuffer);
-    gl.framebufferTexture2D(
-      gl.FRAMEBUFFER, // target
-      gl.DEPTH_ATTACHMENT, // attachment point
-      gl.TEXTURE_2D, // texture target
-      this.lightDepthTexture, // texture
-      0
-    ); // mip level
-    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-
-    // create a color texture of the same size as the depth texture
-    // see article why this is needed_
-    this.unusedTexture = gl.createTexture();
-    gl.bindTexture(gl.TEXTURE_2D, this.unusedTexture);
-    gl.texImage2D(
-      gl.TEXTURE_2D,
-      0,
-      gl.RGBA,
-      this.lightDepthTextureSize,
-      this.lightDepthTextureSize,
-      0,
-      gl.RGBA,
-      gl.UNSIGNED_BYTE,
-      null
-    );
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-    // attach it to the framebuffer
-    gl.framebufferTexture2D(
-      gl.FRAMEBUFFER, // target
-      gl.COLOR_ATTACHMENT0, // attachment point
-      gl.TEXTURE_2D, // texture target
-      this.unusedTexture, // texture
-      0
-    ); // mip level
-    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-  }
-
-  drawTree(context, program_state, wood_transform, tree_transform, x, z) {
-    // Apply the initial translation by x and z to the transforms
-    wood_transform = wood_transform
-      .times(Mat4.translation(x, -1.5, z))
-      .times(Mat4.scale(0.5, 2, 0.5));
-    tree_transform = tree_transform
-      .times(Mat4.translation(x, -1.5, z))
-      .times(Mat4.scale(2, 1, 2));
-
-    // Draw the wood
-    this.shapes.cube.draw(
-      context,
-      program_state,
-      wood_transform,
-      this.materials.wood
-    );
-
-    // Draw the tree leaves
-    for (let i = 0; i < 4; i++) {
-      tree_transform = tree_transform.times(Mat4.translation(0, 0.8, 0));
-      this.shapes.pyramid.draw(
-        context,
-        program_state,
-        tree_transform,
-        this.materials.tree
-      );
-    }
-  }
-
-  render_scene(
-    context,
-    program_state,
-    shadow_pass,
-    draw_light_source = false,
-    draw_shadow = false,
-    t,
-    dt
-  ) {
-    // shadow_pass: true if this is the second pass that draw the shadow.
-    // draw_light_source: true if we want to draw the light source.
-    // draw_shadow: true if we want to draw the shadow
-
-    let light_position = this.light_position;
-    let light_color = this.light_color;
-    let model_transform = Mat4.identity();
-
-    program_state.draw_shadow = draw_shadow;
-
-    if (draw_light_source && shadow_pass) {
-      this.shapes.sphere.draw(
-        context,
-        program_state,
-        Mat4.translation(
-          light_position[0],
-          light_position[1],
-          light_position[2]
-        ).times(Mat4.scale(0.5, 0.5, 0.5)),
-        this.light_src.override({ color: light_color })
-      );
-    }
-    //
-    // for (let i of [-1, 1]) { // Spin the 3D model shapes as well.
-    //     const model_transform = Mat4.translation(2 * i, 3, 0)
-    //         .times(Mat4.rotation(t / 1000, -1, 2, 0))
-    //         .times(Mat4.rotation(-Math.PI / 2, 1, 0, 0));
-    //     this.shapes.teapot.draw(context, program_state, model_transform, shadow_pass? this.stars : this.pure);
-    // }
-
-    for (let i = 0; i < 20; i++) {
-      // this.drawTree(
-      //     context,
-      //     program_state,
-      //     model_trans_tree.times(this.tree_locations[i]),
-      //     model_trans_wood.times(this.tree_locations[i]),
-      //     60,
-      //     -10
-      // );
-    }
-
-    // Draws the Tetris grid
-    for (let i = 0; i < 22; i++) {
-      for (let j = 0; j < 11; j++) {
-        this.shapes.outline.draw(
-          context,
-          program_state,
-          model_transform,
-          this.white,
-          "LINES"
-        );
-        model_transform = model_transform.times(Mat4.translation(2, 0, 0));
-      }
-      model_transform = Mat4.identity().times(Mat4.translation(0, 2 * i, 0));
-    }
-
-    if (!this.rotation) {
-      if (!this.last_pause_time) {
-        this.last_pause_time = t;
-      }
-      this.paused_time += t - this.last_pause_time;
-      this.last_pause_time = t;
-    } else {
-      this.last_pause_time = 0; // Reset the pause time when rotation is enabled
-    }
-
-    // Calculate the adjusted game time and rotation time
-    this.game_time = t - this.paused_time;
-    if (this.rotation) {
-      this.rotation_time = this.game_time;
-    }
-
-    if (!this.game_over) {
-      this.drop_piece(dt); // Use dt instead of current_time to control piece dropping speed
-
-      let model_transform = Mat4.translation(
-        this.piece_position.x * 2,
-        this.piece_position.y * 2,
-        0
-      ).times(this.piece_rotation);
-      this.current_piece.draw(
-        context,
-        program_state,
-        model_transform,
-        this.materials[this.current_piece.constructor.name.toLowerCase()]
-      );
-    }
-
-    for (let y = 0; y < this.grid.length; y++) {
-      for (let x = 0; x < this.grid[y].length; x++) {
-        if (this.grid[y][x]) {
-          let model_transform = Mat4.translation(x * 2, y * 2, 0);
-          this.shapes.cube.draw(
-            context,
-            program_state,
-            model_transform,
-            this.grid[y][x]
-          );
-        }
-      }
-    }
-
-    let model_trans_rock = Mat4.translation(5, 1, 0);
-    let model_trans_ground = Mat4.translation(0, -4, 0).times(
-      Mat4.scale(1000, 0.5, 1000)
-    );
-    let model_trans_sky = Mat4.translation(0, 0, -300).times(
-      Mat4.scale(1000, 1000, 1)
-    );
-    let model_trans_frame = Mat4.translation(10, 20, 0);
-    this.shapes.rock.draw(
-      context,
-      program_state,
-      model_trans_rock,
-      shadow_pass ? this.floor : this.pure
-    );
-    this.shapes.cube.draw(
-      context,
-      program_state,
-      model_trans_ground,
-      shadow_pass ? this.ground : this.pure
-    );
-    this.shapes.cube.draw(
-      context,
-      program_state,
-      model_trans_sky,
-      shadow_pass ? this.sky : this.pure
-    );
-    this.shapes.frame.draw(
-      context,
-      program_state,
-      model_trans_frame,
-      shadow_pass ? this.frame : this.pure
-    );
-    this.draw_score(context, program_state);
   }
 
   display(context, program_state) {
@@ -617,70 +352,5 @@ export class Tetris extends Scene {
     //     ),
     //     this.depth_tex.override({texture: this.lightDepthTexture})
     // );
-  }
-
-  // show_explanation(document_element) {
-  //     document_element.innerHTML += "<p>This demo loads an external 3D model file of a teapot.  It uses a condensed version of the \"webgl-obj-loader.js\" "
-  //         + "open source library, though this version is not guaranteed to be complete and may not handle some .OBJ files.  It is contained in the class \"Shape_From_File\". "
-  //         + "</p><p>One of these teapots is lit with bump mapping.  Can you tell which one?</p>";
-  // }
-  draw_score(context, program_state) {
-    const score_position = { x: 30, y: 20 };
-    const score = 420999;
-
-    let model_transform = Mat4.translation(
-      score_position.x,
-      score_position.y,
-      0
-    );
-
-    const digits = score.toString().split("").map(Number);
-    const cube_size = 0.5; // Decrease the cube size to prevent overlap
-    const digit_spacing = 3; // Adjust the spacing between digits
-
-    digits.forEach((digit, digit_index) => {
-      const digit_shape = defs.digit_shapes[digit];
-      for (let row = 0; row < digit_shape.length; row++) {
-        for (let col = 0; col < digit_shape[row].length; col++) {
-          if (digit_shape[row][col]) {
-            let digit_transform = model_transform
-              .times(
-                Mat4.translation(
-                  digit_index * digit_spacing + col * cube_size,
-                  -row * cube_size,
-                  0
-                )
-              )
-              .times(Mat4.scale(cube_size, cube_size, cube_size));
-            this.shapes.cube.draw(
-              context,
-              program_state,
-              digit_transform,
-              this.materials.numbers
-            );
-          }
-        }
-      }
-    });
-
-    const frame_width = digits.length * digit_spacing * cube_size * 2;
-    const frame_height = 8 * cube_size;
-    let frame_transform = Mat4.translation(
-      score_position.x + frame_width / 2 - cube_size / 2,
-      score_position.y - frame_height / 2 + cube_size / 2,
-      0
-    ).times(
-      Mat4.scale(
-        frame_width / 2 + cube_size,
-        frame_height / 2 + cube_size,
-        cube_size / 2
-      )
-    );
-    this.shapes.cube.draw(
-      context,
-      program_state,
-      frame_transform,
-      this.materials.scoreFrame
-    );
   }
 }

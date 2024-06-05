@@ -2,201 +2,198 @@ import { tiny } from "./common.js";
 const { Mat4, vec3, vec4 } = tiny;
 
 export function start_game_loop() {
-    this.current_piece = this.generate_new_piece();
-    this.piece_position = {
-        x: 5,
-        y: 24 - this.get_piece_height(this.current_piece),
-    };
-    this.piece_rotation = Mat4.identity();
-    this.next_drop_time = 0;
-    this.game_over = false;
-    console.log(
-        "New piece spawned:",
-        this.current_piece.constructor.name,
-        "at position",
-        this.piece_position
-    );
+  this.current_piece = this.generate_new_piece();
+  this.piece_position = {
+    x: 5, // Centered within the play area
+    y: 25 - this.get_piece_height(this.current_piece),
+  };
+  this.piece_rotation = Mat4.identity();
+  this.next_drop_time = 0;
+  this.game_over = false;
+  console.log(
+    "New piece spawned:",
+    this.current_piece.constructor.name,
+    "at position",
+    this.piece_position
+  );
 }
 
 export function generate_new_piece() {
-    const pieces = [
-        "oshape",
-        "lshape",
-        "ishape",
-        "sshape",
-        "zshape",
-        "jshape",
-        "tshape",
-    ];
-    const random_piece = pieces[Math.floor(Math.random() * pieces.length)];
-    return this.shapes[random_piece];
+  const pieces = [
+    "oshape",
+    "lshape",
+    "ishape",
+    "sshape",
+    "zshape",
+    "jshape",
+    "tshape",
+  ];
+  const random_piece = pieces[Math.floor(Math.random() * pieces.length)];
+  return this.shapes[random_piece];
+}
+
+export function move_piece(direction) {
+  const newPosition = { ...this.piece_position, x: this.piece_position.x + direction };
+  if (!this.check_collision_with_frame(newPosition)) {
+    this.piece_position = newPosition;
+  } else {
+    console.log("Collision detected. Move blocked.");
+  }
 }
 
 export function get_piece_height(piece) {
-    let minY = Infinity;
-    let maxY = -Infinity;
-    for (let i = 0; i < piece.arrays.position.length; i++) {
-        const y = piece.arrays.position[i][1];
-        minY = Math.min(minY, y);
-        maxY = Math.max(maxY, y);
-    }
-    return maxY - minY + 1;
-}
-
-export function detect_collision(rotated_piece = false) {
-    for (let i = 0; i < this.current_piece.arrays.position.length; i++) {
-        let cube_position = vec3(
-            this.current_piece.arrays.position[i][0],
-            this.current_piece.arrays.position[i][1],
-            this.current_piece.arrays.position[i][2]
-        );
-
-        if (rotated_piece) {
-            cube_position = this.piece_rotation.times(vec4(cube_position, 1)).to3();
-        }
-
-        let x = this.piece_position.x + Math.round(cube_position[0] / 2);
-        let y = this.piece_position.y - Math.round(cube_position[1] / 2);
-
-        if (
-            x < 0 ||
-            x >= 10 ||
-            y < 0 ||
-            (y < 20 && this.grid[Math.floor(y)][Math.floor(x)])
-        ) {
-            console.log(`Collision detected at: (${x}, ${y})`);
-            return true;
-        }
-    }
-    return false;
-}
-
-export function detect_collision_with_rotation(rotation, position) {
-    for (let i = 0; i < this.current_piece.arrays.position.length; i++) {
-        let cube_position = vec3(
-            this.current_piece.arrays.position[i][0],
-            this.current_piece.arrays.position[i][1],
-            this.current_piece.arrays.position[i][2]
-        );
-
-        cube_position = rotation.times(vec4(cube_position, 1)).to3();
-
-        let x = position.x + Math.round(cube_position[0] / 2);
-        let y = position.y - Math.round(cube_position[1] / 2);
-
-        if (
-            x < 0 ||
-            x >= 10 ||
-            y < 0 ||
-            (y < 20 && this.grid[Math.floor(y)][Math.floor(x)])
-        ) {
-            console.log(`Collision detected during rotation at: (${x}, ${y})`);
-            return true;
-        }
-    }
-    return false;
+  let minY = Infinity;
+  let maxY = -Infinity;
+  for (let i = 0; i < piece.arrays.position.length; i++) {
+    const y = piece.arrays.position[i][1];
+    minY = Math.min(minY, y);
+    maxY = Math.max(maxY, y);
+  }
+  const height = (maxY - minY) / 2;
+  console.log(
+    `Piece: ${piece.constructor.name}, MinY: ${minY}, MaxY: ${maxY}, Calculated Height: ${height}`
+  );
+  return height;
 }
 
 export function rotate_piece() {
-    let new_rotation = Mat4.rotation(Math.PI / 2, 0, 0, 1).times(this.piece_rotation);
+  const rotationMatrix = Mat4.rotation(Math.PI / 2, 0, 0, 1);
 
-    let positions_to_check = [
-        { x: 0, y: 0 },
-        { x: 1, y: 0 },
-        { x: -1, y: 0 },
-        { x: 0, y: 1 },
-        { x: 0, y: -1 },
-        { x: 1, y: 1 },
-        { x: -1, y: -1 },
-        { x: -1, y: 1 },
-        { x: 1, y: -1 }
-    ];
+  // Try rotating in place
+  if (this.try_rotation(rotationMatrix, this.piece_position)) {
+    return;
+  }
 
-    for (let pos of positions_to_check) {
-        let new_position = { x: this.piece_position.x + pos.x, y: this.piece_position.y + pos.y };
-        if (!this.detect_collision_with_rotation(new_rotation, new_position)) {
-            this.piece_rotation = new_rotation;
-            this.piece_position = new_position;
-            console.log('Piece rotated:', this.current_piece.constructor.name, 'to position', this.piece_position);
-            return;
-        }
+  // Try wall kicks
+  const wallKickOffsets = [-2, 2, -4, 4]; // Example wall kick offsets, adjust as needed
+  for (let offset of wallKickOffsets) {
+    const newPosition = { ...this.piece_position, x: this.piece_position.x + offset };
+    if (this.try_rotation(rotationMatrix, newPosition)) {
+      this.piece_position = newPosition;
+      return;
     }
+  }
+
+  console.log("Rotation failed due to collision.");
 }
 
-export function merge_piece_to_grid() {
-    console.log("Merging piece to grid at position:", this.piece_position);
+export function try_rotation(rotationMatrix, position) {
+  // Apply the rotation to the vertices
+  const newPiece = { ...this.current_piece };
+  newPiece.arrays = { ...this.current_piece.arrays, position: [...this.current_piece.arrays.position] };
+  for (let i = 0; i < newPiece.arrays.position.length; i++) {
+    const vertex = vec4(...newPiece.arrays.position[i], 1);
+    const rotated_vertex = rotationMatrix.times(vertex);
+    newPiece.arrays.position[i] = rotated_vertex.to3();
+  }
 
-    for (let i = 0; i < this.current_piece.arrays.position.length; i++) {
-        let cube_position = vec3(
-            this.current_piece.arrays.position[i][0],
-            this.current_piece.arrays.position[i][1],
-            this.current_piece.arrays.position[i][2]
-        );
+  // Check for collision
+  if (!this.check_collision_with_frame(position, newPiece)) {
+    // Update the piece's position and rotation if no collision
+    this.current_piece.arrays.position = newPiece.arrays.position;
+    this.piece_rotation = rotationMatrix.times(this.piece_rotation);
+    this.current_piece.dimensions = this.get_piece_dimensions(this.current_piece);
+    console.log(
+      "Piece rotated:",
+      this.current_piece.constructor.name,
+      "to position",
+      this.piece_position,
+      `Dimensions: Width: ${this.current_piece.dimensions.width}, Height: ${this.current_piece.dimensions.height}`
+    );
+    return true;
+  }
 
-        // Apply rotation
-        cube_position = this.piece_rotation.times(vec4(cube_position, 1)).to3();
-
-        // Translate piece position to grid coordinates
-        let x = Math.floor(this.piece_position.x + cube_position[0] / 2);
-        let y = Math.floor(this.piece_position.y - cube_position[1] / 2);
-
-        console.log(`Adding piece to grid at: (${x}, ${y}) with material ${this.materials[this.current_piece.constructor.name.toLowerCase()]}`);
-
-        if (y >= 0 && y < 20 && x >= 0 && x < 10) {
-            this.grid[y][x] = this.materials[this.current_piece.constructor.name.toLowerCase()];
-        }
-    }
-
-    console.log("Grid after merging:");
-    for (let row of this.grid) {
-        console.log(row.map(cell => (cell ? 1 : 0)).join(" "));
-    }
+  return false;
 }
 
-export function clear_full_rows() {
-    let cleared_rows = 0;
-    this.grid = this.grid.filter((row) => {
-        if (row.every((cell) => cell !== null)) {
-            cleared_rows++;
-            return false;
-        }
-        return true;
-    });
-    while (this.grid.length < 20) {
-        this.grid.unshift(Array(10).fill(null));
-    }
-    if (cleared_rows > 0) {
-        console.log("Cleared rows:", cleared_rows);
-    }
+export function get_piece_dimensions(piece) {
+  let minX = Infinity, maxX = -Infinity;
+  let minY = Infinity, maxY = -Infinity;
+
+  for (let i = 0; i < piece.arrays.position.length; i++) {
+    const x = piece.arrays.position[i][0];
+    const y = piece.arrays.position[i][1];
+
+    minX = Math.min(minX, x);
+    maxX = Math.max(maxX, x);
+    minY = Math.min(minY, y);
+    maxY = Math.max(maxY, y);
+  }
+
+  const width = (maxX - minX) / 2;
+  const height = (maxY - minY) / 2;
+
+  console.log(`Width: ${width}, Height: ${height}`);
+
+  return { width, height };
 }
 
 export function drop_piece(dt) {
-    this.next_drop_time -= dt;
-    if (this.next_drop_time <= 0) {
-        this.piece_position.y -= 1;
-        console.log("Piece position after dropping:", this.piece_position);
-        if (this.detect_collision()) {
-            console.log("Collision detected at:", this.piece_position);
-            this.piece_position.y += 1;
-            this.merge_piece_to_grid();
-            this.clear_full_rows();
-            if (this.piece_position.y >= 20) {
-                this.game_over = true;
-            } else {
-                this.current_piece = this.generate_new_piece();
-                this.piece_position = {
-                    x: 5,
-                    y: 20 - this.get_piece_height(this.current_piece),
-                };
-                this.piece_rotation = Mat4.identity();
-                console.log(
-                    "New piece spawned:",
-                    this.current_piece.constructor.name,
-                    "at position",
-                    this.piece_position
-                );
-            }
-        }
-        this.next_drop_time = 1;
+  this.next_drop_time -= dt;
+  if (this.next_drop_time <= 0) {
+    const newPosition = { ...this.piece_position, y: this.piece_position.y - 1 };
+    if (!this.check_collision_with_frame(newPosition)) {
+      this.piece_position.y -= 1;
+    } else {
+      this.add_piece_to_grid();
+      this.clear_full_rows();
+      this.current_piece = this.generate_new_piece();
+      this.piece_position = {
+        x: 5,
+        y: 25 - this.get_piece_height(this.current_piece),
+      };
+      this.piece_rotation = Mat4.identity();
+      if (this.check_collision_with_frame(this.piece_position)) {
+        this.game_over = true;
+        console.log("Game Over");
+      }
     }
+    console.log("Piece position after dropping:", this.piece_position);
+    this.next_drop_time = 1;
+  }
+}
+
+export function add_piece_to_grid() {
+  const piece = this.current_piece;
+  const position = this.piece_position;
+  const material = this.materials[piece.constructor.name.toLowerCase()];
+
+  for (let i = 0; i < piece.arrays.position.length; i++) {
+    const cube = piece.arrays.position[i];
+    const gridX = Math.floor(position.x + cube[0] / 2);
+    const gridY = Math.floor(position.y + cube[1] / 2);
+
+    if (gridY >= 0 && gridY < this.grid.length && gridX >= 0 && gridX < this.grid[0].length) {
+      this.grid[gridY][gridX] = material;
+    }
+  }
+}
+
+export function clear_full_rows() {
+  for (let y = this.grid.length - 1; y >= 0; y--) {
+    if (this.grid[y].every(cell => cell !== null)) {
+      this.grid.splice(y, 1);
+      this.grid.unshift(Array(10).fill(null));
+      y++;
+    }
+  }
+}
+
+export function check_collision_with_frame(newPosition, piece = this.current_piece) {
+  const playAreaMinX = -1; // Minimum X boundary of the frame
+  const playAreaMaxX = 11; // Maximum X boundary of the frame
+
+  // Check each cube in the piece for collision with frame boundaries and the grid
+  for (let i = 0; i < piece.arrays.position.length; i++) {
+    const cubeX = piece.arrays.position[i][0] / 2; // Since each cube is 2 units
+    const cubeY = piece.arrays.position[i][1] / 2; // Since each cube is 2 units
+    const newX = newPosition.x + cubeX;
+    const newY = newPosition.y + cubeY;
+
+    if (newX < playAreaMinX || newX > playAreaMaxX || newY < 0 || (newY < this.grid.length && newY >= 0 && this.grid[newY]?.[newX])) {
+      return true;
+    }
+  }
+
+  return false;
 }
