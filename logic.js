@@ -140,7 +140,16 @@ export function merge_piece_to_grid() {
     let x = Math.floor(this.piece_position.x + cube_position[0] / 2);
     let y = Math.floor(this.piece_position.y - cube_position[1] / 2);
 
-    console.log(`Adding piece to grid at: (${x}, ${y}) with material ${this.materials[this.current_piece.constructor.name.toLowerCase()]}`);
+    // Debugging logs
+    console.log(`Original cube position: ${this.current_piece.arrays.position[i]}`);
+    console.log(`Transformed cube position: ${cube_position}`);
+
+    if (Number.isNaN(x) || Number.isNaN(y)) {
+      console.error('NaN detected in grid position calculation');
+      continue;
+    }
+
+    console.log(`Calculated grid position: (${x}, ${y})`);
 
     if (y >= 0 && y < 20 && x >= 0 && x < 10) {
       this.grid[y][x] = this.materials[this.current_piece.constructor.name.toLowerCase()];

@@ -1,3 +1,4 @@
+//shader.js
 import { defs, tiny } from "./common.js";
 
 const { Shader, color, vec4, vec3, Matrix } = tiny;

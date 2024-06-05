@@ -1,3 +1,4 @@
+//tetris.js
 import { defs, tiny } from "./common.js";
 import {
   Gouraud_Shader,
@@ -28,97 +29,6 @@ const {
 
 const LIGHT_DEPTH_TEX_SIZE = 1024;
 
-class Pyramid extends Shape {
-  constructor() {
-    super("position", "normal");
-    this.arrays.position = Vector3.cast(
-      [1, 0, 0],
-      [0, 0, -1],
-      [-1, 0, 0],
-      [0, 0, 1],
-      [0, 2, 0],
-      [-1, 0, 0],
-      [0, 0, 1]
-    );
-    this.arrays.normal = Vector3.cast(
-      [1, 0, 0],
-      [0, 0, -1],
-      [-1, 0, 0],
-      [0, 0, 1],
-      [0, 1, 0]
-    );
-    this.indices.push(0, 1, 4, 5, 1, 4, 5, 6, 4, 0, 3, 4, 1, 0, 3, 1, 2, 3); //,2,3,1,0,4,3)
-  }
-}
-
-class Cube_Outline extends Shape {
-  constructor() {
-    super("position", "color");
-    // When a set of lines is used in graphics, you should think of the list entries as
-    // broken down into pairs; each pair of vertices will be drawn as a line segment.
-    // Note: since the outline is rendered with Basic_shader, you need to redefine the
-    // position and color of each vertex
-    this.arrays.position = Vector3.cast(
-      // X Y Z
-      [-1, -1, -1],
-      [1, -1, -1],
-      [-1, -1, -1],
-      [-1, 1, -1],
-      [-1, -1, -1],
-      [-1, -1, 1],
-      [-1, -1, 1],
-      [1, -1, 1],
-      [-1, -1, 1],
-      [-1, 1, 1],
-      [-1, 1, -1],
-      [-1, 1, 1],
-      [-1, 1, -1],
-      [-1, 1, 1],
-      [-1, 1, -1],
-      [1, 1, -1],
-      [-1, 1, 1],
-      [1, 1, 1],
-      [1, -1, -1],
-      [1, 1, -1],
-      [1, -1, 1],
-      [1, 1, 1],
-      [1, 1, -1],
-      [1, 1, 1],
-      [1, -1, -1],
-      [1, -1, 1]
-    );
-    this.arrays.color = [
-      vec4(1, 1, 1, 1),
-      vec4(1, 1, 1, 1),
-      vec4(1, 1, 1, 1),
-      vec4(1, 1, 1, 1),
-      vec4(1, 1, 1, 1),
-      vec4(1, 1, 1, 1),
-      vec4(1, 1, 1, 1),
-      vec4(1, 1, 1, 1),
-      vec4(1, 1, 1, 1),
-      vec4(1, 1, 1, 1),
-      vec4(1, 1, 1, 1),
-      vec4(1, 1, 1, 1),
-      vec4(1, 1, 1, 1),
-      vec4(1, 1, 1, 1),
-      vec4(1, 1, 1, 1),
-      vec4(1, 1, 1, 1),
-      vec4(1, 1, 1, 1),
-      vec4(1, 1, 1, 1),
-      vec4(1, 1, 1, 1),
-      vec4(1, 1, 1, 1),
-      vec4(1, 1, 1, 1),
-      vec4(1, 1, 1, 1),
-      vec4(1, 1, 1, 1),
-      vec4(1, 1, 1, 1),
-      vec4(1, 1, 1, 1),
-      vec4(1, 1, 1, 1),
-    ];
-    this.indices = false;
-  }
-}
-
 export class Tetris extends Scene {
   constructor() {
     super();
@@ -134,8 +44,8 @@ export class Tetris extends Scene {
       frame: new defs.RectangularFrame(),
       cube: new defs.Cube(),
       sphere: new defs.Subdivision_Sphere(4),
-      outline: new Cube_Outline(),
-      pyramid: new Pyramid(),
+      outline: new defs.Cube_Outline(),
+      pyramid: new defs.Pyramid(),
       rock: new defs.Subdivision_Sphere(1),
     };
 
