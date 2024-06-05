@@ -4,7 +4,93 @@ import { defs, tiny } from "./common.js";
 const { Shader, color, vec4, vec3, Matrix } = tiny;
 
 // The size of the light texture buffer
-const LIGHT_DEPTH_TEX_SIZE = 1024;
+export const LIGHT_DEPTH_TEX_SIZE = 2048;
+
+export class Color_Phong_Shader extends defs.Phong_Shader {
+  vertex_glsl_code() {
+      // ********* VERTEX SHADER *********
+      return this.shared_glsl_code() + `
+          varying vec2 f_tex_coord;
+          attribute vec3 position, normal;                            
+          // Position is expressed in object coordinates.
+          attribute vec2 texture_coord;
+          
+          uniform mat4 model_transform;
+          uniform mat4 projection_camera_model_transform;
+  
+          void main(){                                                                   
+              // The vertex's final resting place (in NDCS):
+              gl_Position = projection_camera_model_transform * vec4( position, 1.0 );
+              // The final normal vector in screen space.
+              N = normalize( mat3( model_transform ) * normal / squared_scale);
+              vertex_worldspace = ( model_transform * vec4( position, 1.0 ) ).xyz;
+              // Turn the per-vertex texture coordinate into an interpolated variable.
+              f_tex_coord = texture_coord;
+            } `;
+  }
+
+  fragment_glsl_code() {
+      // ********* FRAGMENT SHADER *********
+      // A fragment is a pixel that's overlapped by the current triangle.
+      // Fragments affect the final image or get discarded due to depth.
+      return this.shared_glsl_code() + `
+          uniform sampler2D texture;
+          uniform sampler2D light_depth_texture;
+          uniform mat4 light_view_mat;
+          uniform mat4 light_proj_mat;
+          
+          void main(){
+              gl_FragColor = vec4( (shape_color.xyz ) * ambient, shape_color.w ); 
+                                                                       // Compute the final color with contributions from lights:
+              gl_FragColor.xyz += phong_model_lights( normalize( N ), vertex_worldspace );
+            } `;
+  }
+
+  send_gpu_state(gl, gpu, gpu_state, model_transform) {
+      // send_gpu_state():  Send the state of our whole drawing context to the GPU.
+      const O = vec4(0, 0, 0, 1), camera_center = gpu_state.camera_transform.times(O).to3();
+      gl.uniform3fv(gpu.camera_center, camera_center);
+      // Use the squared scale trick from "Eric's blog" instead of inverse transpose matrix:
+      const squared_scale = model_transform.reduce(
+          (acc, r) => {
+              return acc.plus(vec4(...r).times_pairwise(r))
+          }, vec4(0, 0, 0, 0)).to3();
+      gl.uniform3fv(gpu.squared_scale, squared_scale);
+      // Send the current matrices to the shader.  Go ahead and pre-compute
+      // the products we'll need of the of the three special matrices and just
+      // cache and send those.  They will be the same throughout this draw
+      // call, and thus across each instance of the vertex shader.
+      // Transpose them since the GPU expects matrices as column-major arrays.
+      const PCM = gpu_state.projection_transform.times(gpu_state.view_mat).times(model_transform);
+      gl.uniformMatrix4fv(gpu.model_transform, false, Matrix.flatten_2D_to_1D(model_transform.transposed()));
+      gl.uniformMatrix4fv(gpu.projection_camera_model_transform, false, Matrix.flatten_2D_to_1D(PCM.transposed()));
+      // shadow related
+      gl.uniformMatrix4fv(gpu.light_view_mat, false, Matrix.flatten_2D_to_1D(gpu_state.light_view_mat.transposed()));
+      gl.uniformMatrix4fv(gpu.light_proj_mat, false, Matrix.flatten_2D_to_1D(gpu_state.light_proj_mat.transposed()));
+
+      // Omitting lights will show only the material color, scaled by the ambient term:
+      if (!gpu_state.lights.length)
+          return;
+
+      const light_positions_flattened = [], light_colors_flattened = [];
+      for (let i = 0; i < 4 * gpu_state.lights.length; i++) {
+          light_positions_flattened.push(gpu_state.lights[Math.floor(i / 4)].position[i % 4]);
+          light_colors_flattened.push(gpu_state.lights[Math.floor(i / 4)].color[i % 4]);
+      }
+      gl.uniform4fv(gpu.light_positions_or_vectors, light_positions_flattened);
+      gl.uniform4fv(gpu.light_colors, light_colors_flattened);
+      gl.uniform1fv(gpu.light_attenuation_factors, gpu_state.lights.map(l => l.attenuation));
+  }
+
+  update_GPU(context, gpu_addresses, gpu_state, model_transform, material) {
+      // update_GPU(): Add a little more to the base class's version of this method.
+      super.update_GPU(context, gpu_addresses, gpu_state, model_transform, material);
+      // Updated for assignment 4
+      context.uniform1f(gpu_addresses.animation_time, gpu_state.animation_time / 1000);
+  }
+}
+
+
 export class Gouraud_Shader extends Shader {
   constructor(num_lights = 2) {
     super();
