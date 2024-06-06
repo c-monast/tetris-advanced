@@ -31,6 +31,7 @@ import {
   LIGHT_DEPTH_TEX_SIZE,
 } from "./shader.js";
 
+
 export function texture_buffer_init(gl) {
   // Depth Texture
   this.lightDepthTexture = gl.createTexture();
@@ -38,6 +39,7 @@ export function texture_buffer_init(gl) {
   this.light_depth_texture = new Buffered_Texture(this.lightDepthTexture);
   this.stars.light_depth_texture = this.light_depth_texture;
   this.floor.light_depth_texture = this.light_depth_texture;
+  this.materials.lshape.light_depth_texture = this.light_depth_texture;
 
   this.lightDepthTextureSize = LIGHT_DEPTH_TEX_SIZE;
   gl.bindTexture(gl.TEXTURE_2D, this.lightDepthTexture);
@@ -118,44 +120,44 @@ export function render_scene(
 
   program_state.draw_shadow = draw_shadow;
 
-  if (draw_light_source && shadow_pass) {
-    this.shapes.sphere.draw(
-      context,
-      program_state,
-      Mat4.translation(
-        light_position[0],
-        light_position[1],
-        light_position[2]
-      ).times(Mat4.scale(0.5, 0.5, 0.5)),
-      this.light_src.override({ color: light_color })
-    );
-  }
+  // if (draw_light_source && shadow_pass) {
+  //   this.shapes.sphere.draw(
+  //     context,
+  //     program_state,
+  //     Mat4.translation(
+  //       light_position[0],
+  //       light_position[1],
+  //       light_position[2]
+  //     ).times(Mat4.scale(0.5, 0.5, 0.5)),
+  //     this.light_src.override({ color: light_color })
+  //   );
+  // }
 
-  for (let i = 0; i < 20; i++) {
-    // this.drawTree(
-    //     context,
-    //     program_state,
-    //     model_trans_tree.times(this.tree_locations[i]),
-    //     model_trans_wood.times(this.tree_locations[i]),
-    //     60,
-    //     -10
-    // );
-  }
+  // for (let i = 0; i < 20; i++) {
+  //   // this.drawTree(
+  //   //     context,
+  //   //     program_state,
+  //   //     model_trans_tree.times(this.tree_locations[i]),
+  //   //     model_trans_wood.times(this.tree_locations[i]),
+  //   //     60,
+  //   //     -10
+  //   // );
+  // }
 
   // Draws the Tetris grid
-  // for (let i = 0; i < 22; i++) {
-  //   for (let j = 0; j < 11; j++) {
-  //     this.shapes.outline.draw(
-  //       context,
-  //       program_state,
-  //       model_transform,
-  //       this.white,
-  //       "LINES"
-  //     );
-  //     model_transform = model_transform.times(Mat4.translation(2, 0, 0));
-  //   }
-  //   model_transform = Mat4.identity().times(Mat4.translation(0, 2 * i, 0));
-  // }
+  for (let i = 0; i < 22; i++) {
+    for (let j = 0; j < 11; j++) {
+      this.shapes.outline.draw(
+        context,
+        program_state,
+        model_transform,
+        this.white,
+        "LINES"
+      );
+      model_transform = model_transform.times(Mat4.translation(2, 0, 0));
+    }
+    model_transform = Mat4.identity().times(Mat4.translation(0, 2 * i, 0));
+  }
 
   if (!this.rotation) {
     if (!this.last_pause_time) {
@@ -203,31 +205,152 @@ export function render_scene(
     }
   }
 
-  let model_trans_rock = Mat4.translation(5, 1, 0);
-  let model_trans_ground = Mat4.translation(0, -4, 0).times(
+
+  // ** HERE ARE ALL THE MAIN OBJECT DRAWS FOR THE SCENE ** //
+  let model_trans_stars = Mat4.identity();
+  let model_trans_ring = Mat4.identity();
+  let model_trans_edge = Mat4.identity();
+  let model_trans_rock = Mat4.identity();
+  let model_trans_mountain = Mat4.identity();
+  let model_trans_cylinder = Mat4.rotation(Math.PI/2,1,0,0);
+  let model_trans_ground = Mat4.translation(0, -3.5, 0).times(
     Mat4.scale(1000, 0.5, 1000)
   );
   let model_trans_sky = Mat4.translation(0, 0, -300).times(
     Mat4.scale(1000, 1000, 1)
   );
   let model_trans_frame = Mat4.translation(10, 20, 0);
+
+  // Draw random stars
+  for (var i = 0; i < 500; i++) {
+    let star_scale = Mat4.scale(0.5, 0.5, 0.5); // Scale down the star
+    this.shapes.sphere.draw(context, program_state, this.starMatrices[i].times(star_scale), this.light_src.override({ color: light_color }));
+  }
+
+  for (var i = 0; i < 200; i++) {
+    let star_scale = Mat4.scale(1.1, 1.1, 1.1); // Scale down the star
+    this.shapes.sphere.draw(context, program_state, this.starMatrices[i].times(star_scale), this.light_src.override({ color: light_color }));
+  }
+
+  for (var i = 0; i < 200; i++) {
+    let star_scale = Mat4.scale(1.1, 1.1, 1.1); // Scale down the star
+    this.shapes.sphere.draw(context, program_state, this.starMatrices2[i], this.light_src.override({ color: light_color }));
+  }
+
+
+
+
+  // ** MANIPULATIONS ** //
+  model_trans_rock = model_trans_rock.times(Mat4.rotation(t / 3000, 0, 1, .5))
+    .times(Mat4.translation(0, 100, -450))
+    .times(Mat4.scale(4,4,4));
+
+  model_trans_edge = model_trans_edge.times(Mat4.translation(0, -200, 0))
+                                     .times(Mat4.rotation(Math.PI / 2, 1, 0, 0))
+                                     .times(Mat4.scale(800,800, 800))
+
+
+  model_trans_mountain = model_trans_mountain.times(Mat4.translation(-120, 0, -270))
+                                             .times(Mat4.rotation(Math.PI / -2, 1, 0, 0))
+                                             .times(Mat4.scale(100, 100, 8));
+
+  model_trans_ring = model_trans_ring.times(Mat4.translation(-120, 5, -270))
+                                     .times(Mat4.rotation(Math.PI / -2, 1, 0, 0))
+                                     .times(Mat4.scale(10, 10 , 8));
+
+
+  // This block draws the energy tower
+  this.shapes.cylinder.draw(
+    context, 
+    program_state, 
+    model_trans_cylinder.times(Mat4.translation(-50,-50,0)).times(Mat4.scale(2,2,6)), 
+    shadow_pass ? this.floor : this.pure 
+  );
+  this.shapes.cylinder.draw(
+    context, 
+    program_state, 
+    model_trans_cylinder.times(Mat4.translation(-50,-50,-6)).times(Mat4.scale(1.5,1.5,5)), 
+    shadow_pass ? this.floor : this.pure 
+  );
+  this.shapes.ring.draw(
+    context,
+    program_state,
+    model_trans_cylinder.times(Mat4.translation(-50,-50, -3)).times(Mat4.scale(2,2,2)),
+    shadow_pass ? this.materials.grey: this.pure
+  );
+  this.shapes.ring.draw(
+    context,
+    program_state,
+    model_trans_cylinder.times(Mat4.translation(-50,-50, -8.4)).times(Mat4.scale(1.5,1.5,2)),
+    shadow_pass ? this.materials.grey: this.pure
+  );
+  this.shapes.cylinder.draw(
+    context, 
+    program_state, 
+    model_trans_cylinder.times(Mat4.translation(-50,-50,-14)).times(Mat4.scale(.7,.7,10)), 
+    shadow_pass ? this.floor : this.pure 
+  );
+  this.shapes.ring.draw(
+    context,
+    program_state,
+    model_trans_cylinder.times(Mat4.translation(-50,-50, -15.2)).times(Mat4.scale(1.3,1.3,1.1)),
+    shadow_pass ? this.materials.grey: this.pure
+  );
+  this.shapes.ring.draw(
+    context,
+    program_state,
+    model_trans_cylinder.times(Mat4.translation(-50,-50, -16.5)).times(Mat4.scale(3,3,1.2)),
+    shadow_pass ? this.materials.grey: this.pure
+  );
+  this.shapes.ring.draw(
+    context,
+    program_state,
+    model_trans_cylinder.times(Mat4.translation(-50,-50, -17.8)).times(Mat4.scale(1.3,1.3,1.1)),
+    shadow_pass ? this.materials.grey: this.pure
+  );
+
+  // This draws the mountain in the background
+  this.shapes.cone.draw(
+    context, 
+    program_state, 
+    model_trans_mountain, 
+    this.ground 
+  );
+
+  this.shapes.ring.draw(
+    context, 
+    program_state, 
+    model_trans_ring, 
+    this.ground
+  );
+
+  // Draw the single star
+  model_trans_stars = model_trans_stars.times(Mat4.translation(0,100,-420))                                   
+  this.shapes.sphere.draw(
+    context, 
+    program_state, 
+    model_trans_stars, 
+    this.light_src.override({ color: light_color })
+  );
+
+  // Draw the mountains in the back
+  this.shapes.torus.draw(
+    context,
+    program_state,
+    model_trans_edge,
+    shadow_pass ? this.edge : this.pure
+  );
   this.shapes.rock.draw(
     context,
     program_state,
     model_trans_rock,
-    shadow_pass ? this.floor : this.pure
+    shadow_pass ? this.floor : this.pure //this.light_src.override({ color: light_color })
   );
   this.shapes.cube.draw(
     context,
     program_state,
     model_trans_ground,
     shadow_pass ? this.ground : this.pure
-  );
-  this.shapes.cube.draw(
-    context,
-    program_state,
-    model_trans_sky,
-    shadow_pass ? this.sky : this.pure
   );
   this.shapes.frame.draw(
     context,
@@ -237,7 +360,6 @@ export function render_scene(
   );
   this.draw_score(context, program_state);
 }
-
 
 export function drawTree(context, program_state, wood_transform, tree_transform, x, z) {
   // Apply the initial translation by x and z to the transforms
