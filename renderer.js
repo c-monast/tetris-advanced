@@ -207,6 +207,7 @@ export function render_scene(
 
 
   // ** HERE ARE ALL THE MAIN OBJECT DRAWS FOR THE SCENE ** //
+  let model_trans_dish = Mat4.identity();
   let model_trans_stars = Mat4.identity();
   let model_trans_ring = Mat4.identity();
   let model_trans_edge = Mat4.identity();
@@ -250,13 +251,13 @@ export function render_scene(
                                      .times(Mat4.scale(800,800, 800))
 
 
-  model_trans_mountain = model_trans_mountain.times(Mat4.translation(-120, 0, -270))
+  model_trans_mountain = model_trans_mountain.times(Mat4.translation(120, 0, -250))
                                              .times(Mat4.rotation(Math.PI / -2, 1, 0, 0))
                                              .times(Mat4.scale(100, 100, 8));
 
-  model_trans_ring = model_trans_ring.times(Mat4.translation(-120, 5, -270))
+  model_trans_ring = model_trans_ring.times(Mat4.translation(120, 5, -250))
                                      .times(Mat4.rotation(Math.PI / -2, 1, 0, 0))
-                                     .times(Mat4.scale(10, 10 , 8));
+                                     .times(Mat4.scale(10, 10 , 6));
 
 
   // This block draws the energy tower
@@ -309,22 +310,96 @@ export function render_scene(
     shadow_pass ? this.materials.grey: this.pure
   );
 
+  this.shapes.cylinder.draw(
+    context, 
+    program_state, 
+    model_trans_cylinder.times(Mat4.translation(-44, -56,0)).times(Mat4.rotation(Math.PI / 2, 1, 1, 0)).times(Mat4.scale(.5,.5,14)), 
+    shadow_pass ? this.floor : this.pure 
+  );
+  this.shapes.cylinder.draw(
+    context, 
+    program_state, 
+    model_trans_cylinder.times(Mat4.translation(-44, -56,2)).times(Mat4.scale(.5,.5,4)), 
+    shadow_pass ? this.floor : this.pure 
+  );
+  this.shapes.cube.draw(
+    context, 
+    program_state, 
+    model_trans_cylinder.times(Mat4.translation(-44, -56,0)).times(Mat4.rotation(Math.PI/4,0,0,1)).times(Mat4.scale(.7,.7,.7)), 
+    shadow_pass ? this.materials.grey : this.pure 
+  );
+  this.shapes.cube.draw(
+    context, 
+    program_state, 
+    model_trans_cylinder.times(Mat4.translation(-38, -62,0)).times(Mat4.rotation(Math.PI/4,0,0,1)).times(Mat4.scale(4,4,6)), 
+    shadow_pass ? this.floor : this.pure 
+  );
+
   // This draws the mountain in the background
   this.shapes.cone.draw(
     context, 
     program_state, 
     model_trans_mountain, 
-    this.ground 
+    shadow_pass ? this.stone.override({ ambient:.1 }) : this.pure
   );
-
   this.shapes.ring.draw(
     context, 
     program_state, 
     model_trans_ring, 
-    this.ground
+    shadow_pass ? this.stone.override({ ambient:.1 }) : this.pure
   );
 
-  // Draw the single star
+  // Draw the satellite dish
+  this.shapes.cone.draw(
+    context, 
+    program_state, 
+    model_trans_dish.times(Mat4.translation(-38, 8.8,-61.2))
+                    .times(Mat4.rotation(Math.PI / 4, 1, 0 ,0))
+                    .times(Mat4.scale(4,4,1)),
+    shadow_pass ? this.floor : this.pure 
+  );
+  this.shapes.cube.draw(
+    context, 
+    program_state, 
+    model_trans_dish.times(Mat4.translation(-39, 7,-60))
+                    .times(Mat4.rotation(Math.PI / -4, 1, 0 ,1))
+                    .times(Mat4.scale(.2,2,.2)), 
+    shadow_pass ? this.materials.grey : this.pure 
+  );
+  this.shapes.cube.draw(
+    context, 
+    program_state, 
+    model_trans_dish.times(Mat4.translation(-38, 7.3,-60))
+                    .times(Mat4.rotation(Math.PI / -4, 1, 0 ,0))
+                    .times(Mat4.scale(.2,4,.2)), 
+    shadow_pass ? this.materials.grey : this.pure 
+  );
+  this.shapes.cube.draw(
+    context, 
+    program_state, 
+    model_trans_dish.times(Mat4.translation(-38, 10.127,-62.55))
+                    .times(Mat4.rotation(Math.PI / -4, 1, 0 ,0))
+                    .times(Mat4.scale(.2,.2,.3)), 
+    shadow_pass ? this.materials.grey : this.pure 
+  );
+  this.shapes.cube.draw(
+    context, 
+    program_state, 
+    model_trans_dish.times(Mat4.translation(-37, 7,-60))
+                    .times(Mat4.rotation(Math.PI / 4, -1, 0,1))
+                    .times(Mat4.scale(.2,2,.2)), 
+    shadow_pass ? this.materials.grey : this.pure 
+  );
+  this.shapes.cube.draw(
+    context, 
+    program_state, 
+    model_trans_dish.times(Mat4.translation(-38, 6,-60.8))
+                    .times(Mat4.scale(.2,3,.2)), 
+    shadow_pass ? this.materials.grey : this.pure 
+  );
+
+
+  // Draw the Earth
   model_trans_stars = model_trans_stars.times(Mat4.translation(0,100,-420))                                   
   this.shapes.sphere.draw(
     context, 
@@ -346,17 +421,18 @@ export function render_scene(
     model_trans_rock,
     shadow_pass ? this.floor : this.pure //this.light_src.override({ color: light_color })
   );
-  this.shapes.cube.draw(
+  this.shapes.ground.draw(
     context,
     program_state,
     model_trans_ground,
     shadow_pass ? this.ground : this.pure
   );
+
   this.shapes.frame.draw(
     context,
     program_state,
     model_trans_frame,
-    shadow_pass ? this.frame : this.pure
+    shadow_pass ? this.stone : this.pure
   );
   this.draw_score(context, program_state);
 }

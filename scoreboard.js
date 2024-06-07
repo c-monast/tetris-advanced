@@ -33,7 +33,7 @@ import {
 
 export function draw_score(context, program_state) {
     const score_position = { x: 30, y: 20 };
-    const score = 420999;
+    const score = 0;
 
     let model_transform = Mat4.translation(
       score_position.x,
@@ -54,7 +54,7 @@ export function draw_score(context, program_state) {
               .times(
                 Mat4.translation(
                   digit_index * digit_spacing + col * cube_size,
-                  -row * cube_size,
+                  -row * cube_size + 10,
                   0
                 )
               )
@@ -74,7 +74,7 @@ export function draw_score(context, program_state) {
     const frame_height = 8 * cube_size;
     let frame_transform = Mat4.translation(
       score_position.x + frame_width / 2 - cube_size / 2,
-      score_position.y - frame_height / 2 + cube_size / 2,
+      score_position.y - frame_height / 2 + cube_size / 2 + 10,
       0
     ).times(
       Mat4.scale(
@@ -83,10 +83,10 @@ export function draw_score(context, program_state) {
         cube_size / 2
       )
     );
-    this.shapes.cube.draw(
-      context,
-      program_state,
-      frame_transform,
-      this.materials.scoreFrame
-    );
+    // this.shapes.cube.draw(
+    //   context,
+    //   program_state,
+    //   frame_transform,
+    //   this.materials.scoreFrame
+    // );
   }

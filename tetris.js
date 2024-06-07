@@ -48,6 +48,7 @@ export class Tetris extends Scene {
       tshape: new defs.TShape(),
       sphere: new Subdivision_Sphere(6),
       cube: new Cube(),
+      ground: new Cube(),
       rock: new Subdivision_Sphere(1),
       frame: new defs.RectangularFrame(),
       pyramid: new defs.Pyramid(),
@@ -167,10 +168,19 @@ export class Tetris extends Scene {
       texture: null,
     });
     this.ground = new Material(new Shadow_Textured_Phong_Shader(1), {
-      ambient: 0.5,
+      ambient: 0.4,
       specularity: 0.3,
       diffusivity: .1,
       color: hex_color("#E9620A"),
+      color_texture: null,
+      texture: new Texture("assets/stone.jpg", "NEAREST")
+    });
+    this.stone = new Material(new Textured_Phong(), {
+      ambient: .3,
+      specularity: .1,
+      diffusivity: .1,
+      color: hex_color("#E9620A"),
+      texture: new Texture("assets/stone.jpg", "NEAREST"),
       color_texture: null,
     });
     this.sky = new Material(new Color_Phong_Shader(), {
@@ -207,6 +217,8 @@ export class Tetris extends Scene {
       diffusivity: 0.3,
       color: hex_color("#C85205"),
     });
+    this.shapes.ground.arrays.texture_coord.forEach(p => p.scale_by(16));
+
 
     this.starMatrices = [];
     this.starMatrices2 = [];
