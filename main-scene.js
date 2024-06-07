@@ -1,5 +1,5 @@
 import {defs, tiny} from './common.js';
-import {Tetris} from "./tetris.js";
+import {Main} from "./main.js";
 
 // Pull these names into this module's scope for convenience:
 const {
@@ -18,14 +18,14 @@ const {
 const Minimal_Webgl_Demo = defs.Minimal_Webgl_Demo;
 
 Object.assign(defs,
-    {Tetris}
+    {Main}
 );
 
 // ******************** End extra step
 
 // (Can define Main_Scene's class here)
 
-const Main_Scene = Tetris;
+const Main_Scene = Main;
 const Additional_Scenes = [];
 
 export {Main_Scene, Additional_Scenes, Canvas_Widget, Code_Widget, Text_Widget, defs}

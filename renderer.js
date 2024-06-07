@@ -39,7 +39,6 @@ export function texture_buffer_init(gl) {
   this.light_depth_texture = new Buffered_Texture(this.lightDepthTexture);
   this.stars.light_depth_texture = this.light_depth_texture;
   this.floor.light_depth_texture = this.light_depth_texture;
-  this.materials.lshape.light_depth_texture = this.light_depth_texture;
 
   this.lightDepthTextureSize = LIGHT_DEPTH_TEX_SIZE;
   gl.bindTexture(gl.TEXTURE_2D, this.lightDepthTexture);
@@ -110,54 +109,12 @@ export function render_scene(
   t,
   dt
 ) {
-  // shadow_pass: true if this is the second pass that draw the shadow.
-  // draw_light_source: true if we want to draw the light source.
-  // draw_shadow: true if we want to draw the shadow
 
   let light_position = this.light_position;
   let light_color = this.light_color;
   let model_transform = Mat4.identity();
 
   program_state.draw_shadow = draw_shadow;
-
-  // if (draw_light_source && shadow_pass) {
-  //   this.shapes.sphere.draw(
-  //     context,
-  //     program_state,
-  //     Mat4.translation(
-  //       light_position[0],
-  //       light_position[1],
-  //       light_position[2]
-  //     ).times(Mat4.scale(0.5, 0.5, 0.5)),
-  //     this.light_src.override({ color: light_color })
-  //   );
-  // }
-
-  // for (let i = 0; i < 20; i++) {
-  //   // this.drawTree(
-  //   //     context,
-  //   //     program_state,
-  //   //     model_trans_tree.times(this.tree_locations[i]),
-  //   //     model_trans_wood.times(this.tree_locations[i]),
-  //   //     60,
-  //   //     -10
-  //   // );
-  // }
-
-  // Draws the Tetris grid
-  for (let i = 0; i < 22; i++) {
-    for (let j = 0; j < 11; j++) {
-      this.shapes.outline.draw(
-        context,
-        program_state,
-        model_transform,
-        this.white,
-        "LINES"
-      );
-      model_transform = model_transform.times(Mat4.translation(2, 0, 0));
-    }
-    model_transform = Mat4.identity().times(Mat4.translation(0, 2 * i, 0));
-  }
 
   if (!this.rotation) {
     if (!this.last_pause_time) {
@@ -175,36 +132,6 @@ export function render_scene(
     this.rotation_time = this.game_time;
   }
 
-  if (!this.game_over) {
-    this.drop_piece(dt); // Use dt instead of current_time to control piece dropping speed
-
-    let model_transform = Mat4.translation(
-      this.piece_position.x * 2,
-      this.piece_position.y * 2,
-      0
-    ).times(this.piece_rotation);
-    this.current_piece.draw(
-      context,
-      program_state,
-      model_transform,
-      this.materials[this.current_piece.constructor.name.toLowerCase()]
-    );
-  }
-
-  for (let y = 0; y < this.grid.length; y++) {
-    for (let x = 0; x < this.grid[y].length; x++) {
-      if (this.grid[y][x]) {
-        let model_transform = Mat4.translation(x, y, 0);
-        this.shapes.cube.draw(
-          context,
-          program_state,
-          model_transform,
-          this.grid[y][x]
-        );
-      }
-    }
-  }
-
 
   // ** HERE ARE ALL THE MAIN OBJECT DRAWS FOR THE SCENE ** //
   let model_trans_dish = Mat4.identity();
@@ -220,7 +147,7 @@ export function render_scene(
   let model_trans_sky = Mat4.translation(0, 0, -300).times(
     Mat4.scale(1000, 1000, 1)
   );
-  let model_trans_frame = Mat4.translation(10, 20, 0);
+  let model_trans_frame = Mat4.translation(13, 20, 0);
 
   // Draw random stars
   for (var i = 0; i < 500; i++) {

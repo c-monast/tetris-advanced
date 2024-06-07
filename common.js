@@ -1,6 +1,7 @@
-import {tiny} from '../tiny-graphics.js';
-import {widgets} from '../tiny-graphics-widgets.js';
-// Pull these names into this module's scope for convenience:
+import { tiny } from '../tiny-graphics.js';
+import { widgets } from '../tiny-graphics-widgets.js';
+import { IShape, LShape, TShape, OShape, SShape, ZShape, JShape } from './shapes.js'; // Import the shapes
+
 const {
     Vector, Vector3, vec, vec3, vec4, color, Matrix, Mat4,
     Light, Shape, Material, Shader, Texture, Scene
@@ -10,7 +11,7 @@ Object.assign(tiny, widgets);
 
 const defs = {};
 
-export {tiny, defs};
+export { tiny, defs };
 
 defs.digit_shapes = {
     0: [
@@ -115,83 +116,25 @@ defs.digit_shapes = {
     ],
 };
 
-const IShape = (defs.IShape = class IShape extends Shape {
-    constructor() {
-        super("position", "normal", "texture_coord");
-        for (let i = 0; i < 4; i++) {
-            const cube_transform = Mat4.translation(2 * i, 0, 0);
-            Cube.insert_transformed_copy_into(this, [], cube_transform);
+const Cube = defs.Cube =
+    class Cube extends Shape {
+        // **Cube** A closed 3D shape, and the first example of a compound shape (a Shape constructed
+        // out of other Shapes).  A cube inserts six Square strips into its own arrays, using six
+        // different matrices as offsets for each square.
+        constructor() {
+            super("position", "normal", "texture_coord");
+            // Loop 3 times (for each axis), and inside loop twice (for opposing cube sides):
+            for (let i = 0; i < 3; i++)
+                for (let j = 0; j < 2; j++) {
+                    const square_transform = Mat4.rotation(i == 0 ? Math.PI / 2 : 0, 1, 0, 0)
+                        .times(Mat4.rotation(Math.PI * j - (i == 1 ? Math.PI / 2 : 0), 0, 1, 0))
+                        .times(Mat4.translation(0, 0, 1));
+                    // Calling this function of a Square (or any Shape) copies it into the specified
+                    // Shape (this one) at the specified matrix offset (square_transform):
+                    Square.insert_transformed_copy_into(this, [], square_transform);
+                }
         }
     }
-});
-
-const LShape = (defs.LShape = class LShape extends Shape {
-    constructor() {
-        super("position", "normal", "texture_coord");
-        for (let i = 0; i < 3; i++) {
-            const cube_transform = Mat4.translation(0, 2 * i, 0);
-            Cube.insert_transformed_copy_into(this, [], cube_transform);
-        }
-        const cube_transform = Mat4.translation(2, 0, 0);
-        Cube.insert_transformed_copy_into(this, [], cube_transform);
-    }
-});
-
-const TShape = (defs.TShape = class TShape extends Shape {
-    constructor() {
-        super("position", "normal", "texture_coord");
-        for (let i = 0; i < 3; i++) {
-            const cube_transform = Mat4.translation(2 * (i - 1), 0, 0);
-            Cube.insert_transformed_copy_into(this, [], cube_transform);
-        }
-        const cube_transform = Mat4.translation(0, 2, 0);
-        Cube.insert_transformed_copy_into(this, [], cube_transform);
-    }
-});
-
-const OShape = (defs.OShape = class OShape extends Shape {
-    constructor() {
-        super("position", "normal", "texture_coord");
-        for (let x = 0; x < 2; x++) {
-            for (let y = 0; y < 2; y++) {
-                const cube_transform = Mat4.translation(2 * x, 2 * y, 0);
-                Cube.insert_transformed_copy_into(this, [], cube_transform);
-            }
-        }
-    }
-});
-
-const SShape = (defs.SShape = class SShape extends Shape {
-    constructor() {
-        super("position", "normal", "texture_coord");
-        Cube.insert_transformed_copy_into(this, [], Mat4.translation(0, 0, 0));
-        Cube.insert_transformed_copy_into(this, [], Mat4.translation(2, 0, 0));
-        Cube.insert_transformed_copy_into(this, [], Mat4.translation(2, 2, 0));
-        Cube.insert_transformed_copy_into(this, [], Mat4.translation(4, 2, 0));
-    }
-});
-
-const ZShape = (defs.ZShape = class ZShape extends Shape {
-    constructor() {
-        super("position", "normal", "texture_coord");
-        Cube.insert_transformed_copy_into(this, [], Mat4.translation(0, 2, 0));
-        Cube.insert_transformed_copy_into(this, [], Mat4.translation(2, 2, 0));
-        Cube.insert_transformed_copy_into(this, [], Mat4.translation(2, 0, 0));
-        Cube.insert_transformed_copy_into(this, [], Mat4.translation(4, 0, 0));
-    }
-});
-
-const JShape = (defs.JShape = class JShape extends Shape {
-    constructor() {
-        super("position", "normal", "texture_coord");
-        for (let i = 0; i < 3; i++) {
-            const cube_transform = Mat4.translation(0, 2 * i, 0);
-            Cube.insert_transformed_copy_into(this, [], cube_transform);
-        }
-        const cube_transform = Mat4.translation(-2, 0, 0);
-        Cube.insert_transformed_copy_into(this, [], cube_transform);
-    }
-});
 
 const Pyramid =
     (defs.Pyramid = class Pyramid extends Shape {
@@ -291,7 +234,7 @@ const RectangularFrame =
         constructor() {
             super("position", "normal", "texture_coord");
 
-            const playAreaX = 10;
+            const playAreaX = 9;
             const playAreaY = 20;
             const frameWidth = 1;
             const outerX = playAreaX / 2 + frameWidth;
@@ -446,28 +389,6 @@ const Windmill = defs.Windmill =
             }
         }
     }
-
-
-const Cube = defs.Cube =
-    class Cube extends Shape {
-        // **Cube** A closed 3D shape, and the first example of a compound shape (a Shape constructed
-        // out of other Shapes).  A cube inserts six Square strips into its own arrays, using six
-        // different matrices as offsets for each square.
-        constructor() {
-            super("position", "normal", "texture_coord");
-            // Loop 3 times (for each axis), and inside loop twice (for opposing cube sides):
-            for (let i = 0; i < 3; i++)
-                for (let j = 0; j < 2; j++) {
-                    const square_transform = Mat4.rotation(i == 0 ? Math.PI / 2 : 0, 1, 0, 0)
-                        .times(Mat4.rotation(Math.PI * j - (i == 1 ? Math.PI / 2 : 0), 0, 1, 0))
-                        .times(Mat4.translation(0, 0, 1));
-                    // Calling this function of a Square (or any Shape) copies it into the specified
-                    // Shape (this one) at the specified matrix offset (square_transform):
-                    Square.insert_transformed_copy_into(this, [], square_transform);
-                }
-        }
-    }
-
 
 const Subdivision_Sphere = defs.Subdivision_Sphere =
     class Subdivision_Sphere extends Shape {
