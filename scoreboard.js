@@ -1,45 +1,11 @@
 import { defs, tiny } from "./common.js";
-const {
-  vec3,
-  vec4,
-  vec,
-  color,
-  hex_color,
-  Matrix,
-  Mat4,
-  Light,
-  Shape,
-  Material,
-  Shader,
-  Texture,
-  Scene,
-} = tiny;
-const {
-  Cube,
-  Axis_Arrows,
-  Textured_Phong,
-  Phong_Shader,
-  Basic_Shader,
-  Subdivision_Sphere,
-} = defs;
-
-import {
-  Color_Phong_Shader,
-  Shadow_Textured_Phong_Shader,
-  Depth_Texture_Shader_2D,
-  Buffered_Texture,
-  LIGHT_DEPTH_TEX_SIZE,
-} from "./shader.js";
+const { Mat4 } = tiny;
 
 export function draw_score(context, program_state) {
   const score_position = { x: -15, y: 20 };
-  const score = this.tetris.score; // Use the score from the Tetris instance
+  const score = this.tetris.currentScore; // Use the score from the Tetris instance
 
-  let model_transform = Mat4.translation(
-    score_position.x,
-    score_position.y,
-    0
-  );
+  let model_transform = Mat4.translation(score_position.x, score_position.y, 0);
 
   const digits = score.toString().split("").map(Number);
   const cube_size = 0.5; // Decrease the cube size to prevent overlap
@@ -83,10 +49,4 @@ export function draw_score(context, program_state) {
       cube_size / 2
     )
   );
-  // this.shapes.cube.draw(
-  //   context,
-  //   program_state,
-  //   frame_transform,
-  //   this.materials.scoreFrame
-  // );
 }

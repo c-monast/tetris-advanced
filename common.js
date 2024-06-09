@@ -1,6 +1,5 @@
 import { tiny } from '../tiny-graphics.js';
 import { widgets } from '../tiny-graphics-widgets.js';
-import { IShape, LShape, TShape, OShape, SShape, ZShape, JShape } from './shapes.js'; // Import the shapes
 
 const {
     Vector, Vector3, vec, vec3, vec4, color, Matrix, Mat4,

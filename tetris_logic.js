@@ -1,236 +1,58 @@
+import { tiny } from "./common.js";
+import { Shapes } from "./shapes.js";
+
+const { hex_color, Mat4 } = tiny;
+
 export class tetris {
-  constructor() {
-    this.initializeGrid();
+  constructor(shapes, materials) {
+    this.shapes = shapes;
+    this.materials = materials;
+    this.initializeGameGrid();
     this.initializeGameSettings();
     this.initializePieceQueue();
-    this.initializePieceConfig();
+    this.initializePieceConfigurations();
     this.initializeKickData();
   }
 
-  initializeGrid() {
-    this.grid = Array.from({ length: 14 }, () => Array(24).fill(-1));
-    for (let i = 0; i < 14; i++) {
-      for (let j = 0; j < 24; j++) {
-        if (i < 2 || i > 11 || j < 2) {
-          this.grid[i][j] = -1;
+  initializeGameGrid() {
+    this.gameGrid = Array.from({ length: 14 }, () => Array(24).fill(-1));
+    for (let row = 0; row < 14; row++) {
+      for (let col = 0; col < 24; col++) {
+        if (row < 2 || row > 11 || col < 2) {
+          this.gameGrid[row][col] = -1;
         }
       }
     }
   }
 
   initializeGameSettings() {
-    this.score = 0;
-    this.level = 0;
-    this.linesCleared = 0;
-    this.x = 6;
-    this.y = 19;
-    this.block = Math.floor(Math.random() * 7);
-    this.rotation = 0;
-    this.gameEnd = false;
-    this.animate = Array(24).fill(false);
-    this.isAnimating = false;
-    this.fullLines = [];
+    this.currentScore = 0;
+    this.currentLevel = 0;
+    this.totalLinesCleared = 0;
+    this.currentXPosition = 6;
+    this.currentYPosition = 19;
+    this.currentPieceType = Math.floor(Math.random() * 7);
+    this.currentRotationState = 0;
+    this.isGameOver = false;
+    this.lineAnimationStates = Array(24).fill(false);
+    this.isLineClearingAnimationActive = false;
+    this.clearedLines = [];
   }
 
   initializePieceQueue() {
-    this.queue = [];
-    let bag = Array.from({ length: 7 }, (_, i) => i).filter(
-      (i) => i !== this.block
+    this.pieceQueue = [];
+    let pieceBag = Array.from({ length: 7 }, (_, index) => index).filter(
+      (index) => index !== this.currentPieceType
     );
-    while (bag.length) {
-      let randomIndex = Math.floor(Math.random() * bag.length);
-      this.queue.push(bag.splice(randomIndex, 1)[0]);
+    while (pieceBag.length) {
+      let randomIndex = Math.floor(Math.random() * pieceBag.length);
+      this.pieceQueue.push(pieceBag.splice(randomIndex, 1)[0]);
     }
   }
 
-  initializePieceConfig() {
-    this.config = [
-      //order of pieces: IOTLJSZ
-
-      [
-        [
-          [-1, 1],
-          [0, 1],
-          [1, 1],
-          [2, 1],
-        ],
-        [
-          [1, 2],
-          [1, 1],
-          [1, 0],
-          [1, -1],
-        ],
-        [
-          [-1, 0],
-          [0, 0],
-          [1, 0],
-          [2, 0],
-        ],
-        [
-          [0, 2],
-          [0, 1],
-          [0, 0],
-          [0, -1],
-        ],
-      ],
-      [
-        [
-          [1, 0],
-          [1, 1],
-          [0, 0],
-          [0, 1],
-        ],
-        [
-          [1, 0],
-          [1, 1],
-          [0, 0],
-          [0, 1],
-        ],
-        [
-          [1, 0],
-          [1, 1],
-          [0, 0],
-          [0, 1],
-        ],
-        [
-          [1, 0],
-          [1, 1],
-          [0, 0],
-          [0, 1],
-        ],
-      ],
-      [
-        [
-          [-1, 0],
-          [0, 0],
-          [0, 1],
-          [1, 0],
-        ],
-        [
-          [0, 0],
-          [0, 1],
-          [0, -1],
-          [1, 0],
-        ],
-        [
-          [-1, 0],
-          [0, 0],
-          [0, -1],
-          [1, 0],
-        ],
-        [
-          [-1, 0],
-          [0, 1],
-          [0, 0],
-          [0, -1],
-        ],
-      ],
-      [
-        [
-          [-1, 1],
-          [0, 1],
-          [1, 1],
-          [1, 2],
-        ],
-        [
-          [0, 2],
-          [0, 1],
-          [0, 0],
-          [1, 0],
-        ],
-        [
-          [-1, 1],
-          [0, 1],
-          [1, 1],
-          [-1, 0],
-        ],
-        [
-          [0, 2],
-          [0, 1],
-          [0, 0],
-          [-1, 2],
-        ],
-      ],
-      [
-        [
-          [-1, 1],
-          [0, 1],
-          [1, 1],
-          [-1, 2],
-        ],
-        [
-          [0, 2],
-          [0, 1],
-          [0, 0],
-          [1, 2],
-        ],
-        [
-          [-1, 1],
-          [0, 1],
-          [1, 1],
-          [1, 0],
-        ],
-        [
-          [0, 2],
-          [0, 1],
-          [0, 0],
-          [-1, 0],
-        ],
-      ],
-      [
-        [
-          [-1, 0],
-          [0, 1],
-          [0, 0],
-          [1, 1],
-        ],
-        [
-          [0, 1],
-          [0, 0],
-          [1, 0],
-          [1, -1],
-        ],
-        [
-          [-1, -1],
-          [0, -1],
-          [0, 0],
-          [1, 0],
-        ],
-        [
-          [-1, 1],
-          [-1, 0],
-          [0, 0],
-          [0, -1],
-        ],
-      ],
-      [
-        [
-          [-1, 1],
-          [0, 1],
-          [0, 0],
-          [1, 0],
-        ],
-        [
-          [1, 1],
-          [1, 0],
-          [0, 0],
-          [0, -1],
-        ],
-        [
-          [-1, 0],
-          [0, 0],
-          [0, -1],
-          [1, -1],
-        ],
-        [
-          [-1, -1],
-          [-1, 0],
-          [0, 0],
-          [0, 1],
-        ],
-      ],
-    ];
-    this.colors = [
+  initializePieceConfigurations() {
+    this.pieceConfigurations = Shapes.getAllPieceConfigurations();
+    this.pieceColors = [
       "0dff72",
       "ff0d72",
       "ff0d0d",
@@ -243,7 +65,7 @@ export class tetris {
   }
 
   initializeKickData() {
-    this.iKick = [
+    this.iPieceKickData = [
       [
         [-2, 0],
         [1, 0],
@@ -293,7 +115,7 @@ export class tetris {
         [2, -1],
       ],
     ];
-    this.kick = [
+    this.pieceKickData = [
       [
         [-1, 0],
         [-1, 1],
@@ -345,153 +167,149 @@ export class tetris {
     ];
   }
 
-  checkCollision(x, y, rotation) {
-    return this.config[this.block][rotation].every(([dx, dy]) => {
-      const newX = x + dx,
-        newY = y + dy;
-      return (
-        newX >= 2 &&
-        newX < 12 &&
-        newY >= 0 &&
-        newY < 22 &&
-        this.grid[newX][newY] === -1
-      );
-    });
+  checkCollision(x, y, rotationState) {
+    return this.pieceConfigurations[this.currentPieceType][rotationState].every(
+      ([dx, dy]) => {
+        const newX = x + dx,
+          newY = y + dy;
+        return (
+          newX >= 2 &&
+          newX < 12 &&
+          newY >= 0 &&
+          newY < 22 &&
+          this.gameGrid[newX][newY] === -1
+        );
+      }
+    );
   }
 
   clearLines() {
-    let linesCleared = 0;
+    let linesClearedCount = 0;
     for (let y = 0; y < 24; y++) {
-      if (this.grid.slice(2, 12).every((row) => row[y] !== -1)) {
-        this.grid.slice(2, 12).forEach((row) => (row[y] = -1));
+      if (this.gameGrid.slice(2, 12).every((row) => row[y] !== -1)) {
+        this.gameGrid.slice(2, 12).forEach((row) => (row[y] = -1));
         for (let j = y; j < 23; j++) {
-          this.grid.slice(2, 12).forEach((row) => (row[j] = row[j + 1]));
+          this.gameGrid.slice(2, 12).forEach((row) => (row[j] = row[j + 1]));
         }
-        this.grid.slice(2, 12).forEach((row) => (row[23] = -1));
-        linesCleared++;
+        this.gameGrid.slice(2, 12).forEach((row) => (row[23] = -1));
+        linesClearedCount++;
         y--;
       }
     }
-    if (linesCleared > 0) {
-      this.updateScore(linesCleared);
+    if (linesClearedCount > 0) {
+      this.updateScore(linesClearedCount);
     }
-    this.fullLines = [];
+    this.clearedLines = [];
   }
 
-  updateScore(linesCleared) {
-    const scores = [0, 40, 100, 300, 1200];
-    this.score += scores[linesCleared] * (this.level + 1);
-    this.linesCleared += linesCleared;
-    if (this.linesCleared >= (this.level + 1) * 10) {
-      this.level++;
+  updateScore(linesClearedCount) {
+    const scoreValues = [0, 40, 100, 300, 1200];
+    this.currentScore += scoreValues[linesClearedCount] * (this.currentLevel + 1);
+    this.totalLinesCleared += linesClearedCount;
+    if (this.totalLinesCleared >= (this.currentLevel + 1) * 10) {
+      this.currentLevel++;
     }
   }
 
-  checkLines() {
-    this.fullLines = [];
-    let flag = false;
+  detectFullLines() {
+    this.clearedLines = [];
+    let hasFullLine = false;
     for (let y = 0; y < 24; y++) {
-      const fullLine = this.grid.slice(2, 12).every((row) => row[y] !== -1);
-      this.animate[y] = fullLine;
-      if (fullLine) {
-        flag = true;
-        this.fullLines.push(y);
+      const isLineFull = this.gameGrid.slice(2, 12).every((row) => row[y] !== -1);
+      this.lineAnimationStates[y] = isLineFull;
+      if (isLineFull) {
+        hasFullLine = true;
+        this.clearedLines.push(y);
       }
     }
-    return flag;
+    return hasFullLine;
   }
 
-  getBlock() {
-    if (this.queue.length < 6) {
-      const bag = Array.from({ length: 7 }, (_, i) => i);
-      while (bag.length) {
-        let randomIndex = Math.floor(Math.random() * bag.length);
-        this.queue.push(bag.splice(randomIndex, 1)[0]);
+  getNextPiece() {
+    if (this.pieceQueue.length < 6) {
+      const newBag = Array.from({ length: 7 }, (_, index) => index);
+      while (newBag.length) {
+        let randomIndex = Math.floor(Math.random() * newBag.length);
+        this.pieceQueue.push(newBag.splice(randomIndex, 1)[0]);
       }
     }
-    return this.queue.shift();
+    return this.pieceQueue.shift();
   }
 
-  placeBlock() {
-    this.config[this.block][this.rotation].forEach(([dx, dy]) => {
-      this.grid[this.x + dx][this.y + dy] = this.block;
-    });
-    this.x = 6;
-    this.y = 19;
-    this.block = this.getBlock();
-    this.rotation = 0;
+  placeCurrentPiece() {
+    this.pieceConfigurations[this.currentPieceType][this.currentRotationState].forEach(
+      ([dx, dy]) => {
+        this.gameGrid[this.currentXPosition + dx][this.currentYPosition + dy] =
+          this.currentPieceType;
+      }
+    );
+    this.currentXPosition = 6;
+    this.currentYPosition = 19;
+    this.currentPieceType = this.getNextPiece();
+    this.currentRotationState = 0;
   }
 
-  checkEnd() {
-    if (!this.checkCollision(this.x, this.y, this.rotation)) {
-      this.gameEnd = true;
+  checkGameOver() {
+    if (!this.checkCollision(this.currentXPosition, this.currentYPosition, this.currentRotationState)) {
+      this.isGameOver = true;
     }
   }
 
-  tick() {
-    if (!this.gameEnd) {
-      if (this.isAnimating) {
+  gameTick() {
+    if (!this.isGameOver) {
+      if (this.isLineClearingAnimationActive) {
         return true;
       }
-      if (this.checkCollision(this.x, this.y - 1, this.rotation)) {
-        this.y--;
+      if (this.checkCollision(this.currentXPosition, this.currentYPosition - 1, this.currentRotationState)) {
+        this.currentYPosition--;
         return false;
       } else {
-        this.placeBlock();
-        if (this.checkLines()) {
-          this.isAnimating = true;
+        this.placeCurrentPiece();
+        if (this.detectFullLines()) {
+          this.isLineClearingAnimationActive = true;
           return true;
         }
         this.clearLines();
-        this.checkEnd();
+        this.checkGameOver();
         return true;
       }
     }
   }
 
-  moveLeft() {
-    if (
-      !this.gameEnd &&
-      this.checkCollision(this.x - 1, this.y, this.rotation)
-    ) {
-      this.x--;
+  movePieceLeft() {
+    if (!this.isGameOver && this.checkCollision(this.currentXPosition - 1, this.currentYPosition, this.currentRotationState)) {
+      this.currentXPosition--;
     }
   }
 
-  moveRight() {
-    if (
-      !this.gameEnd &&
-      this.checkCollision(this.x + 1, this.y, this.rotation)
-    ) {
-      this.x++;
+  movePieceRight() {
+    if (!this.isGameOver && this.checkCollision(this.currentXPosition + 1, this.currentYPosition, this.currentRotationState)) {
+      this.currentXPosition++;
     }
   }
 
-  moveDown() {
-    if (
-      !this.gameEnd &&
-      this.checkCollision(this.x, this.y - 1, this.rotation)
-    ) {
-      this.y--;
+  movePieceDown() {
+    if (!this.isGameOver && this.checkCollision(this.currentXPosition, this.currentYPosition - 1, this.currentRotationState)) {
+      this.currentYPosition--;
     }
   }
 
-  rotate() {
-    if (!this.gameEnd) {
-      const newRotation = (this.rotation + 1) % 4;
-      if (this.checkCollision(this.x, this.y, newRotation)) {
-        this.rotation = newRotation;
+  rotatePiece() {
+    if (!this.isGameOver) {
+      const newRotationState = (this.currentRotationState + 1) % 4;
+      if (this.checkCollision(this.currentXPosition, this.currentYPosition, newRotationState)) {
+        this.currentRotationState = newRotationState;
       } else {
-        const kicks =
-          this.block === 0
-            ? this.iKick[this.rotation * 2]
-            : this.kick[this.rotation * 2];
-        for (let i = 0; i < kicks.length; i++) {
-          const [dx, dy] = kicks[i];
-          if (this.checkCollision(this.x + dx, this.y + dy, newRotation)) {
-            this.x += dx;
-            this.y += dy;
-            this.rotation = newRotation;
+        const kickOffsets =
+          this.currentPieceType === 0
+            ? this.iPieceKickData[this.currentRotationState * 2]
+            : this.pieceKickData[this.currentRotationState * 2];
+        for (let i = 0; i < kickOffsets.length; i++) {
+          const [dx, dy] = kickOffsets[i];
+          if (this.checkCollision(this.currentXPosition + dx, this.currentYPosition + dy, newRotationState)) {
+            this.currentXPosition += dx;
+            this.currentYPosition += dy;
+            this.currentRotationState = newRotationState;
             return;
           }
         }
@@ -499,7 +317,74 @@ export class tetris {
     }
   }
 
-  getBottom() {
-    return !this.checkCollision(this.x, this.y - 1, this.rotation);
+  isPieceAtBottom() {
+    return !this.checkCollision(this.currentXPosition, this.currentYPosition - 1, this.currentRotationState);
+  }
+
+  drawBlock(context, programState, x, y, color, scale = 1) {
+    const scaleMatrix = Mat4.scale(scale, scale, scale);
+    const transform = Mat4.scale(-1, 1, 1).times(Mat4.translation(x, y, 0).times(scaleMatrix));
+    this.shapes.cube.draw(
+      context,
+      programState,
+      transform,
+      this.materials.plastic.override({ color: hex_color(color) })
+    );
+  }
+
+  drawGameBoard(context, programState, gameGrid) {
+    for (let row = 0; row < 14; row++) {
+      for (let col = 0; col < 22; col++) {
+        if (gameGrid[row][col] !== -1) {
+          this.drawBlock(
+            context,
+            programState,
+            -row * 2,
+            col * 2,
+            this.pieceColors[gameGrid[row][col]]
+          );
+        }
+      }
+    }
+  }
+
+  drawPiece(context, programState, tetris, pieceOptions) {
+    if (!tetris) return;
+
+    const [x, y, pieceOffsets, color] =
+      pieceOptions === -1
+        ? [
+            tetris.currentXPosition,
+            tetris.currentYPosition,
+            tetris.pieceConfigurations[tetris.currentPieceType][tetris.currentRotationState],
+            tetris.pieceColors[tetris.currentPieceType],
+          ]
+        : [
+            15,
+            17.5 - 4 * pieceOptions[0],
+            tetris.pieceConfigurations[pieceOptions[1]] ? tetris.pieceConfigurations[pieceOptions[1]][0] : [],
+            tetris.pieceColors[pieceOptions[1]],
+          ];
+
+    for (let i = 0; i < 4; i++) {
+      if (!pieceOffsets[i]) continue; // Check if pieceOffsets[i] is defined
+      const [newX, newY] = [x + pieceOffsets[i][0], y + pieceOffsets[i][1]];
+      const modelTransform = Mat4.scale(-1, 1, 1).times(Mat4.translation(-newX * 2, newY * 2, 0));
+      this.shapes.cube.draw(
+        context,
+        programState,
+        modelTransform,
+        this.materials.plastic.override({ color: hex_color(color) })
+      );
+    }
+  }
+
+  drawPieceQueue(context, programState) {
+    if (!this) return;
+    for (let i = 0; i < 1; i++) {
+      if (this.pieceQueue[i] !== undefined) {
+        this.drawPiece(context, programState, this, [i, this.pieceQueue[i]]);
+      }
+    }
   }
 }
