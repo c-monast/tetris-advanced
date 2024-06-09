@@ -86,7 +86,7 @@ export class tetris {
         this.clearedLines.push(y);
       }
     }
-
+  
     if (this.clearedLines.length > 0) {
       for (const y of this.clearedLines) {
         for (let row = 2; row < 12; row++) {
@@ -129,18 +129,31 @@ export class tetris {
   }
 
   placeCurrentPiece() {
-    this.pieceConfigurations[this.currentPieceType][
+    // Check if placing the next piece would cause a game over
+    const canPlaceNextPiece = this.checkCollision(
+      this.currentXPosition,
+      this.currentYPosition,
       this.currentRotationState
-    ].forEach(([dx, dy]) => {
-      this.gameGrid[this.currentXPosition + dx][this.currentYPosition + dy] =
-        this.currentPieceType;
+    );
+  
+    if (!canPlaceNextPiece) {
+      // If the next piece cannot be placed, set game over state and return
+      this.isGameOver = true;
+      return;
+    }
+  
+    // Place the current piece on the grid
+    this.pieceConfigurations[this.currentPieceType][this.currentRotationState].forEach(([dx, dy]) => {
+      this.gameGrid[this.currentXPosition + dx][this.currentYPosition + dy] = this.currentPieceType;
     });
+  
+    // Reset the position for the next piece
     this.currentXPosition = 6;
     this.currentYPosition = 19;
     this.currentPieceType = this.getNextPiece();
     this.currentRotationState = 0;
   }
-
+  
   checkGameOver() {
     if (
       !this.checkCollision(
@@ -152,7 +165,17 @@ export class tetris {
       this.isGameOver = true;
     }
   }
-
+  
+  changeAllPiecesToWhite() {
+    for (let row = 0; row < 14; row++) {
+      for (let col = 0; col < 24; col++) {
+        if (this.gameGrid[row][col] !== -1) {
+          this.gameGrid[row][col] = 'white'; // Set the color to white
+        }
+      }
+    }
+  }
+  
   gameTick() {
     if (!this.isGameOver) {
       if (this.isLineClearingAnimationActive) {
@@ -170,16 +193,21 @@ export class tetris {
         this.currentYPosition--;
         return false;
       } else {
+        // Check if placing the piece causes game over
         this.placeCurrentPiece();
+        if (this.isGameOver) {
+          this.changeAllPiecesToWhite();
+          return true;
+        }
         if (this.detectFullLines()) {
           this.isLineClearingAnimationActive = true;
           return true;
         }
         this.clearLines();
-        this.checkGameOver();
         return true;
       }
     }
+    return false;
   }
 
   movePieceLeft() {
@@ -270,25 +298,26 @@ export class tetris {
       context,
       programState,
       transform,
-      this.materials.plastic.override({ color: hex_color(color) })
+      this.materials.shape.override({ color: hex_color(color) })
     );
   }
-
-  drawGameBoard(context, programState, gameGrid) {
-    for (let row = 0; row < 14; row++) {
-      for (let col = 0; col < 22; col++) {
-        if (gameGrid[row][col] !== -1) {
-          this.drawBlock(
-            context,
-            programState,
-            -row * 2,
-            col * 2,
-            this.pieceColors[gameGrid[row][col]]
-          );
-        }
+drawGameBoard(context, programState, gameGrid) {
+  for (let row = 0; row < 14; row++) {
+    for (let col = 0; col < 22; col++) {
+      if (gameGrid[row][col] !== -1) {
+        const color = gameGrid[row][col] === 'white' ? 'ffffff' : this.pieceColors[gameGrid[row][col]];
+        this.drawBlock(
+          context,
+          programState,
+          -row * 2,
+          col * 2,
+          color
+        );
       }
     }
   }
+}
+
 
   drawPiece(context, programState, tetris, pieceOptions) {
     if (!tetris) return;
@@ -322,7 +351,7 @@ export class tetris {
         context,
         programState,
         modelTransform,
-        this.materials.plastic.override({ color: hex_color(color) })
+        this.materials.shape.override({ color: hex_color(color) })
       );
     }
   }

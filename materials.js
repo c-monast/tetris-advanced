@@ -19,8 +19,8 @@ export class Materials {
     };
 
     this.materials = {
-      plastic: new Material(new defs.Phong_Shader(), {
-        ambient: 0.4,
+      shape: new Material(new defs.Phong_Shader(), {
+        ambient: 0.9,
         diffusivity: 0.6,
         color: hex_color("#ffffff"),
       }),
@@ -29,8 +29,8 @@ export class Materials {
         color: hex_color("#ba53ed"),
       }),
       numbers: new Material(new defs.Phong_Shader(), {
-        ...commonShaderProps,
-        diffusivity: 10,
+        ambient: 0.9,
+        diffusivity: 3,
         color: hex_color("#44fcf6"),
       }),
       mountain: new Material(new Shadow_Textured_Phong_Shader(1), {
