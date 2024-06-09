@@ -1,15 +1,7 @@
 import { defs, tiny } from "./common.js";
 import { tetris } from "./tetris_logic.js";
-import {
-  Color_Phong_Shader,
-  Shadow_Textured_Phong_Shader,
-  Depth_Texture_Shader_2D,
-  Buffered_Texture,
-  LIGHT_DEPTH_TEX_SIZE,
-} from "./shader.js";
 
-const { vec3, vec4, color, hex_color, Mat4, Light, Material, Scene, Texture } =
-  tiny;
+const { vec3, vec4, color, Mat4, Light, Scene } = tiny;
 
 const {
   Cube,
@@ -20,8 +12,6 @@ const {
   Torus,
   Closed_Cone,
   Cylindrical_Tube,
-  Phong_Shader,
-  Textured_Phong,
 } = defs;
 
 import * as renderer from "./renderer.js";
@@ -263,36 +253,41 @@ export class Main extends Scene {
 
     this.t = t;
 
+    // Handle line clearing animation
     if (this.lineClearStartTime !== 0 && t - this.lineClearStartTime > 500) {
       this.tetris.isLineClearingAnimationActive = false;
       this.lineClearStartTime = 0;
       this.tetris.clearLines();
-    }
-
-    if (
+    } else if (
       this.tetris.isLineClearingAnimationActive &&
       this.lineClearStartTime === 0
     ) {
       this.lineClearStartTime = t;
     }
 
-    if (
-      t - this.currentTickTime > 500 ||
-      (this.inputBuffer > 15 && this.tetris.isPieceAtBottom())
-    ) {
+    // Handle game tick and piece movement
+    const shouldTick = t - this.currentTickTime > 500;
+    const shouldMovePiece =
+      this.inputBuffer > 15 && this.tetris.isPieceAtBottom();
+
+    if (shouldTick || shouldMovePiece) {
       this.tetris.gameTick();
       this.currentTickTime = t;
       this.inputBuffer = 0;
     }
 
+    // Draw the current piece
     this.tetris.drawPiece(context, program_state, this.tetris, -1);
 
+    // Handle game over animation
     if (this.tetris.isGameOver) {
       if (this.endAnimationStep === 0) {
         this.endAnimationStartTime = t;
         this.endAnimationStep = 1;
-      }
-      if (t - this.endAnimationStartTime > 50 && this.endAnimationStep < 60) {
+      } else if (
+        t - this.endAnimationStartTime > 50 &&
+        this.endAnimationStep < 60
+      ) {
         this.endAnimationStep++;
         this.endAnimationStartTime = t;
       }

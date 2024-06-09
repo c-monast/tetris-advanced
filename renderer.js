@@ -1,32 +1,9 @@
-import { defs, tiny } from "./common.js";
+import { tiny } from "./common.js";
 const {
-  vec3,
-  vec4,
-  vec,
-  color,
-  hex_color,
-  Matrix,
   Mat4,
-  Light,
-  Shape,
-  Material,
-  Shader,
-  Texture,
-  Scene,
 } = tiny;
-const {
-  Cube,
-  Axis_Arrows,
-  Textured_Phong,
-  Phong_Shader,
-  Basic_Shader,
-  Subdivision_Sphere,
-} = defs;
 
 import {
-  Color_Phong_Shader,
-  Shadow_Textured_Phong_Shader,
-  Depth_Texture_Shader_2D,
   Buffered_Texture,
   LIGHT_DEPTH_TEX_SIZE,
 } from "./shader.js";
