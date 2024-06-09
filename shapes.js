@@ -11,75 +11,136 @@ export class Shapes {
     });
   }
 
-  static generatePieceConfig(initialOffsets) {
+  static generatePieceConfig(initialOffsets, color) {
     const rotations = [];
     for (let angle = 0; angle < 360; angle += 90) {
       rotations.push(this.rotateOffsets(initialOffsets, angle));
     }
-    return rotations;
+    return { rotations, color };
+  }
+
+  static generateKickData(pieceType) {
+    const standardKicks = [
+      [0, 0], [1, 0], [0, -1], [1, -1]
+    ];
+    const iPieceKicks = [
+      [-2, 0], [1, 0], [-2, -1], [1, 2]
+    ];
+    
+    const kickData = [];
+    for (let i = 0; i < 4; i++) {
+      if (pieceType === 'I') {
+        kickData.push(iPieceKicks.map(([dx, dy]) => [dx * (i % 2 === 0 ? -1 : 1), dy * (Math.floor(i / 2) % 2 === 0 ? -1 : 1)]));
+      } else {
+        kickData.push(standardKicks.map(([dx, dy]) => [dx * (i % 2 === 0 ? -1 : 1), dy * (Math.floor(i / 2) % 2 === 0 ? -1 : 1)]));
+      }
+    }
+    return kickData;
   }
 
   static getIPiece() {
-    return this.generatePieceConfig([
-      [0, -1],
-      [0, 0],
-      [0, 1],
-      [0, 2],
-    ]);
+    return {
+      ...this.generatePieceConfig(
+        [
+          [0, -1],
+          [0, 0],
+          [0, 1],
+          [0, 2],
+        ],
+        "#FF5733" // Burnt Orange
+      ),
+      kickData: this.generateKickData('I')
+    };
   }
 
   static getOPiece() {
-    return this.generatePieceConfig([
-      [0, 0],
-      [0, 1],
-      [1, 0],
-      [1, 1],
-    ]);
+    return {
+      ...this.generatePieceConfig(
+        [
+          [0, 0],
+          [0, 1],
+          [1, 0],
+          [1, 1],
+        ],
+        "#FFC300" // Desert Yellow
+      ),
+      kickData: this.generateKickData('O')
+    };
   }
 
   static getTPiece() {
-    return this.generatePieceConfig([
-      [0, 0],
-      [-1, 0],
-      [1, 0],
-      [0, 1],
-    ]);
+    return {
+      ...this.generatePieceConfig(
+        [
+          [0, 0],
+          [-1, 0],
+          [1, 0],
+          [0, 1],
+        ],
+        "#C70039" // Mars Red
+      ),
+      kickData: this.generateKickData('T')
+    };
   }
 
   static getLPiece() {
-    return this.generatePieceConfig([
-      [0, 0],
-      [-1, 0],
-      [1, 0],
-      [1, 1],
-    ]);
+    return {
+      ...this.generatePieceConfig(
+        [
+          [0, 0],
+          [-1, 0],
+          [1, 0],
+          [1, 1],
+        ],
+        "#3498DB" // Space Blue
+      ),
+      kickData: this.generateKickData('L')
+    };
   }
 
   static getJPiece() {
-    return this.generatePieceConfig([
-      [0, 0],
-      [-1, 0],
-      [1, 0],
-      [-1, 1],
-    ]);
+    return {
+      ...this.generatePieceConfig(
+        [
+          [0, 0],
+          [-1, 0],
+          [1, 0],
+          [-1, 1],
+        ],
+        "#2ECC71" // Alien Green
+      ),
+      kickData: this.generateKickData('J')
+    };
   }
 
   static getSPiece() {
-    return this.generatePieceConfig([
-      [0, 0],
-      [0, 1],
-      [-1, 1],
-      [1, 0],
-    ]);
+    return {
+      ...this.generatePieceConfig(
+        [
+          [0, 0],
+          [0, 1],
+          [-1, 1],
+          [1, 0],
+        ],
+        "#8E44AD" // Dark Purple
+      ),
+      kickData: this.generateKickData('S')
+    };
   }
 
   static getZPiece() {
-    return this.generatePieceConfig([
-      [0, 0],
-      [0, 1],
-      [1, 1],
-      [-1, 0],
-    ]);
+    return {
+      ...this.generatePieceConfig(
+        [
+          [0, 0],
+          [0, 1],
+          [1, 1],
+          [-1, 0],
+        ],
+        "#1ABC9C" // Bright Cyan
+      ),
+      kickData: this.generateKickData('Z')
+    };
   }
 
   static getAllPieceConfigurations() {

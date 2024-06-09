@@ -70,11 +70,8 @@ export class Main extends Scene {
     this.depth_tex = materials.depth_tex;
     this.ground = materials.ground;
     this.stone = materials.stone;
-    this.sky = materials.sky;
     this.frame = materials.frame;
     this.white = materials.white;
-    this.tree = materials.tree;
-    this.wood = materials.wood;
     this.edge = materials.edge;
     this.shapes.ground.arrays.texture_coord.forEach((p) => p.scale_by(16));
 
@@ -117,7 +114,6 @@ export class Main extends Scene {
 
     this.texture_buffer_init = renderer.texture_buffer_init.bind(this);
     this.render_scene = renderer.render_scene.bind(this);
-    this.drawTree = renderer.drawTree.bind(this);
 
     this.draw_score = scoreboard.draw_score.bind(this);
   }

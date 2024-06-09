@@ -363,32 +363,3 @@ export function render_scene(
   );
   this.draw_score(context, program_state);
 }
-
-export function drawTree(context, program_state, wood_transform, tree_transform, x, z) {
-  // Apply the initial translation by x and z to the transforms
-  wood_transform = wood_transform
-    .times(Mat4.translation(x, -1.5, z))
-    .times(Mat4.scale(0.5, 2, 0.5));
-  tree_transform = tree_transform
-    .times(Mat4.translation(x, -1.5, z))
-    .times(Mat4.scale(2, 1, 2));
-
-  // Draw the wood
-  this.shapes.cube.draw(
-    context,
-    program_state,
-    wood_transform,
-    this.materials.wood
-  );
-
-  // Draw the tree leaves
-  for (let i = 0; i < 4; i++) {
-    tree_transform = tree_transform.times(Mat4.translation(0, 0.8, 0));
-    this.shapes.pyramid.draw(
-      context,
-      program_state,
-      tree_transform,
-      this.materials.tree
-    );
-  }
-}
