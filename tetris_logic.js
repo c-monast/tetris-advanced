@@ -37,6 +37,7 @@ export class tetris {
     this.lineAnimationStates = Array(24).fill(false);
     this.isLineClearingAnimationActive = false;
     this.clearedLines = [];
+    this.gameSpeed = 500; // Initial game speed in milliseconds
   }
 
   initializePieceQueue() {
@@ -105,9 +106,17 @@ export class tetris {
     this.currentScore +=
       scoreValues[linesClearedCount] * (this.currentLevel + 1);
     this.totalLinesCleared += linesClearedCount;
+
+    // Increase the level every 10 lines cleared
     if (this.totalLinesCleared >= (this.currentLevel + 1) * 10) {
       this.currentLevel++;
+      this.increaseGameSpeed();
     }
+  }
+
+  increaseGameSpeed() {
+    // Decrease the game tick interval to increase speed
+    this.gameSpeed = Math.max(100, this.gameSpeed - 50); // Ensure it doesn't go below 100ms
   }
 
   detectFullLines() {
@@ -301,23 +310,23 @@ export class tetris {
       this.materials.shape.override({ color: hex_color(color) })
     );
   }
-drawGameBoard(context, programState, gameGrid) {
-  for (let row = 0; row < 14; row++) {
-    for (let col = 0; col < 22; col++) {
-      if (gameGrid[row][col] !== -1) {
-        const color = gameGrid[row][col] === 'white' ? 'ffffff' : this.pieceColors[gameGrid[row][col]];
-        this.drawBlock(
-          context,
-          programState,
-          -row * 2,
-          col * 2,
-          color
-        );
+
+  drawGameBoard(context, programState, gameGrid) {
+    for (let row = 0; row < 14; row++) {
+      for (let col = 0; col < 22; col++) {
+        if (gameGrid[row][col] !== -1) {
+          const color = gameGrid[row][col] === 'white' ? 'ffffff' : this.pieceColors[gameGrid[row][col]];
+          this.drawBlock(
+            context,
+            programState,
+            -row * 2,
+            col * 2,
+            color
+          );
+        }
       }
     }
   }
-}
-
 
   drawPiece(context, programState, tetris, pieceOptions) {
     if (!tetris) return;

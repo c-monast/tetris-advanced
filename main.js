@@ -253,24 +253,36 @@ export class Main extends Scene {
 
     this.t = t;
 
-    // Handle line clearing animation
-    if (this.lineClearStartTime !== 0 && t - this.lineClearStartTime > 500) {
-      this.tetris.isLineClearingAnimationActive = false;
-      this.lineClearStartTime = 0;
-      this.tetris.clearLines();
-    } else if (
-      this.tetris.isLineClearingAnimationActive &&
-      this.lineClearStartTime === 0
-    ) {
+    const LINE_CLEAR_ANIMATION_CHECK_INTERVAL = 50; // Check every 50ms
+    const INPUT_BUFFER_THRESHOLD = 15; // Original input buffer threshold
+    const END_ANIMATION_STEP_INTERVAL = 50; // Original end animation step interval
+
+    // Cache frequently accessed properties
+    const lineClearStartTime = this.lineClearStartTime;
+    const isLineClearingAnimationActive =
+      this.tetris.isLineClearingAnimationActive;
+    const isPieceAtBottom = this.tetris.isPieceAtBottom;
+
+    // Handle line clearing animation check more frequently
+    if (lineClearStartTime !== 0) {
+      if (t - lineClearStartTime > LINE_CLEAR_ANIMATION_CHECK_INTERVAL) {
+        this.tetris.isLineClearingAnimationActive = false;
+        this.lineClearStartTime = 0;
+        this.tetris.clearLines();
+      }
+    } else if (isLineClearingAnimationActive) {
       this.lineClearStartTime = t;
     }
 
-    // Handle game tick and piece movement
-    const shouldTick = t - this.currentTickTime > 500;
-    const shouldMovePiece =
-      this.inputBuffer > 15 && this.tetris.isPieceAtBottom();
+    // Calculate time difference once
+    const timeDifference = t - this.currentTickTime;
+    const gameSpeed = this.tetris.gameSpeed; // Use the dynamic game speed
 
-    if (shouldTick || shouldMovePiece) {
+    // Handle game tick and piece movement at dynamic intervals
+    if (
+      timeDifference > gameSpeed ||
+      (this.inputBuffer > INPUT_BUFFER_THRESHOLD && isPieceAtBottom)
+    ) {
       this.tetris.gameTick();
       this.currentTickTime = t;
       this.inputBuffer = 0;
@@ -285,7 +297,7 @@ export class Main extends Scene {
         this.endAnimationStartTime = t;
         this.endAnimationStep = 1;
       } else if (
-        t - this.endAnimationStartTime > 50 &&
+        t - this.endAnimationStartTime > END_ANIMATION_STEP_INTERVAL &&
         this.endAnimationStep < 60
       ) {
         this.endAnimationStep++;
