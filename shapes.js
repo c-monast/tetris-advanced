@@ -21,36 +21,37 @@ export class Shapes {
 
   static generateKickData(pieceType) {
     const standardKicks = [
-      [0, 0], [1, 0], [0, -1], [1, -1]
+      [0, 0],
+      [1, 0],
+      [0, -1],
+      [1, -1],
     ];
     const iPieceKicks = [
-      [-2, 0], [1, 0], [-2, -1], [1, 2]
+      [-2, 0],
+      [1, 0],
+      [-2, -1],
+      [1, 2],
     ];
-    
+
     const kickData = [];
     for (let i = 0; i < 4; i++) {
-      if (pieceType === 'I') {
-        kickData.push(iPieceKicks.map(([dx, dy]) => [dx * (i % 2 === 0 ? -1 : 1), dy * (Math.floor(i / 2) % 2 === 0 ? -1 : 1)]));
+      if (pieceType === "I") {
+        kickData.push(
+          iPieceKicks.map(([dx, dy]) => [
+            dx * (i % 2 === 0 ? -1 : 1),
+            dy * (Math.floor(i / 2) % 2 === 0 ? -1 : 1),
+          ])
+        );
       } else {
-        kickData.push(standardKicks.map(([dx, dy]) => [dx * (i % 2 === 0 ? -1 : 1), dy * (Math.floor(i / 2) % 2 === 0 ? -1 : 1)]));
+        kickData.push(
+          standardKicks.map(([dx, dy]) => [
+            dx * (i % 2 === 0 ? -1 : 1),
+            dy * (Math.floor(i / 2) % 2 === 0 ? -1 : 1),
+          ])
+        );
       }
     }
     return kickData;
-  }
-
-  static getIPiece() {
-    return {
-      ...this.generatePieceConfig(
-        [
-          [0, -1],
-          [0, 0],
-          [0, 1],
-          [0, 2],
-        ],
-        "#FF5733" // Burnt Orange
-      ),
-      kickData: this.generateKickData('I')
-    };
   }
 
   static getOPiece() {
@@ -64,52 +65,22 @@ export class Shapes {
         ],
         "#FFC300" // Desert Yellow
       ),
-      kickData: this.generateKickData('O')
+      kickData: this.generateKickData("O"),
     };
   }
 
-  static getTPiece() {
+  static getIPiece() {
     return {
       ...this.generatePieceConfig(
         [
+          [0, -1],
           [0, 0],
-          [-1, 0],
-          [1, 0],
           [0, 1],
+          [0, 2],
         ],
-        "#C70039" // Mars Red
+        "#FF5733" // Burnt Orange
       ),
-      kickData: this.generateKickData('T')
-    };
-  }
-
-  static getLPiece() {
-    return {
-      ...this.generatePieceConfig(
-        [
-          [0, 0],
-          [-1, 0],
-          [1, 0],
-          [1, 1],
-        ],
-        "#3498DB" // Space Blue
-      ),
-      kickData: this.generateKickData('L')
-    };
-  }
-
-  static getJPiece() {
-    return {
-      ...this.generatePieceConfig(
-        [
-          [0, 0],
-          [-1, 0],
-          [1, 0],
-          [-1, 1],
-        ],
-        "#2ECC71" // Alien Green
-      ),
-      kickData: this.generateKickData('J')
+      kickData: this.generateKickData("I"),
     };
   }
 
@@ -124,7 +95,7 @@ export class Shapes {
         ],
         "#8E44AD" // Dark Purple
       ),
-      kickData: this.generateKickData('S')
+      kickData: this.generateKickData("S"),
     };
   }
 
@@ -139,19 +110,64 @@ export class Shapes {
         ],
         "#1ABC9C" // Bright Cyan
       ),
-      kickData: this.generateKickData('Z')
+      kickData: this.generateKickData("Z"),
+    };
+  }
+
+  static getLPiece() {
+    return {
+      ...this.generatePieceConfig(
+        [
+          [0, 0],
+          [-1, 0],
+          [1, 0],
+          [1, 1],
+        ],
+        "#3498DB" // Space Blue
+      ),
+      kickData: this.generateKickData("L"),
+    };
+  }
+
+  static getJPiece() {
+    return {
+      ...this.generatePieceConfig(
+        [
+          [0, 0],
+          [-1, 0],
+          [1, 0],
+          [-1, 1],
+        ],
+        "#2ECC71" // Alien Green
+      ),
+      kickData: this.generateKickData("J"),
+    };
+  }
+
+  static getTPiece() {
+    return {
+      ...this.generatePieceConfig(
+        [
+          [0, 0],
+          [-1, 0],
+          [1, 0],
+          [0, 1],
+        ],
+        "#C70039" // Mars Red
+      ),
+      kickData: this.generateKickData("T"),
     };
   }
 
   static getAllPieceConfigurations() {
     return [
-      this.getIPiece(),
       this.getOPiece(),
-      this.getTPiece(),
-      this.getLPiece(),
-      this.getJPiece(),
+      this.getIPiece(),
       this.getSPiece(),
       this.getZPiece(),
+      this.getLPiece(),
+      this.getJPiece(),
+      this.getTPiece(),
     ];
   }
 }

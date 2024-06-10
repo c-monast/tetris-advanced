@@ -89,11 +89,16 @@ export class tetris {
     }
   
     if (this.clearedLines.length > 0) {
-      for (const y of this.clearedLines) {
-        for (let row = 2; row < 12; row++) {
-          for (let col = y; col < 23; col++) {
-            this.gameGrid[row][col] = this.gameGrid[row][col + 1];
+      // Start from the highest cleared line and move upwards
+      for (let i = this.clearedLines.length - 1; i >= 0; i--) {
+        const line = this.clearedLines[i];
+        for (let y = line; y < 23; y++) {
+          for (let row = 2; row < 12; row++) {
+            this.gameGrid[row][y] = this.gameGrid[row][y + 1];
           }
+        }
+        // Clear the top row after shifting down
+        for (let row = 2; row < 12; row++) {
           this.gameGrid[row][23] = -1;
         }
       }
